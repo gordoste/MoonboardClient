@@ -21,6 +21,6 @@ public:
   void setLog(BasicLog *);
   Client *getClient();
   void setClient(Client *client);
-}
+};
 
 #endif // #ifndef _PANEL_CLIENT_H
