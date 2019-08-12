@@ -1,0 +1,22 @@
+{
+    "description": "Moonboard client library", 
+    "platforms": [
+        "espressif8266",
+        "espressif32"
+    ], 
+    "authors": [
+        {
+            "maintainer": true, 
+            "name": "Stephen Gordon", 
+            "url": null, 
+            "email": "gordoste@iinet.net.au"
+        }
+    ], 
+    "name": "MoonboardClient",
+    "frameworks": [
+        "arduino"
+    ],
+	"dependencies": [
+	],
+    "version": "1.0"
+}
