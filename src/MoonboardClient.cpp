@@ -3,6 +3,15 @@
 void MoonboardClient::begin(BasicLog *_log)
 {
     m_log = _log;
+    m_btmPnl.begin(_log);
+    m_midPnl.begin(_log);
+    m_topPnl.begin(_log);
+    m_btmPnl.setAddress(IPAddress(192,168,20,59),4011);
+    m_midPnl.setAddress(IPAddress(192,168,20,59),4012);
+    m_topPnl.setAddress(IPAddress(192,168,20,59),4013);
+    m_btmPnl.connect();
+    m_midPnl.connect();
+    m_topPnl.connect();
 }
 
 BasicLog *MoonboardClient::getLog()
@@ -15,6 +24,14 @@ void MoonboardClient::setLog(BasicLog *_log)
   m_log = _log;
 }
 
+void MoonboardClient::showProblem(Problem *p)
+{
+  m_btmPnl.lightHolds(p->bottomHolds);
+  m_midPnl.lightHolds(p->middleHolds);
+  m_topPnl.lightHolds(p->topHolds);
+}
+
+// read the string, placing data in the problem struct passed. Return true on success
 bool MoonboardClient::readProblem(Problem *p, char *in)
 {
   char *ptr = NULL;
@@ -76,4 +93,11 @@ bool MoonboardClient::readProblem(Problem *p, char *in)
   }
   p->topHolds = ptr;
   return true;
+}
+
+void MoonboardClient::stop()
+{
+  m_btmPnl.stop();
+  m_midPnl.stop();
+  m_topPnl.stop();
 }
