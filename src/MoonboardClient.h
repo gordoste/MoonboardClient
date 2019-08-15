@@ -13,12 +13,14 @@ protected:
   PanelClient m_topPnl;
 public:
   MoonboardClient() {};
-  void begin(BasicLog *_log);
+  int begin(BasicLog *_log);
   BasicLog *getLog();
   void setLog(BasicLog *);
   bool readProblem(Problem *p, char *in);
   void showProblem(Problem *p);
+  void clearBoard();
   void stop();
+  bool isConnected();
 };
 
 #endif // #ifndef _MOONBOARD_CLIENT_H
