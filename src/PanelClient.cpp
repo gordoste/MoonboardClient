@@ -54,6 +54,7 @@ void PanelClient::sendCommand(const char *cmd, const char *data)
     m_log->debug("write:%s", sendBuf);
     m_client.write(sendBuf);
   }
+  m_client.write('\n');
   if (!waitForAck(m_cmdId)) {
     m_log->debug("sendCommand failed");
   }
@@ -83,15 +84,18 @@ bool PanelClient::waitForAck(int cmdId)
     {
       if (atoi(&(rcvdBuf[4])) == cmdId)
       {
+        m_rcvLen = 0;
         return true;
       }
       else {
         m_log->debug("WFA: exp %d got %s", cmdId, &(rcvdBuf[4]));
+        m_rcvLen = 0;
         return false;
       }
     }
     else {
       m_log->debug("WFA: exp ACK got %s", rcvdBuf);
+      m_rcvLen = 0;
       return false;
     }
   }
