@@ -13,7 +13,8 @@ protected:
   PanelClient m_topPnl;
 public:
   MoonboardClient() {};
-  int begin(BasicLog *_log);
+  void begin(BasicLog *_log);
+  int connect();
   BasicLog *getLog();
   void setLog(BasicLog *);
   bool readProblem(Problem *p, char *in);

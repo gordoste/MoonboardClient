@@ -1,6 +1,6 @@
 #include "MoonboardClient.h"
 
-int MoonboardClient::begin(BasicLog *_log)
+void MoonboardClient::begin(BasicLog *_log)
 {
     m_log = _log;
     m_btmPnl.begin(_log);
@@ -9,6 +9,10 @@ int MoonboardClient::begin(BasicLog *_log)
     m_btmPnl.setAddress(IPAddress(192,168,20,59),4011);
     m_midPnl.setAddress(IPAddress(192,168,20,59),4012);
     m_topPnl.setAddress(IPAddress(192,168,20,59),4013);
+}
+
+int MoonboardClient::connect()
+{
     m_btmPnl.connect();
     m_midPnl.connect();
     m_topPnl.connect();
@@ -33,6 +37,8 @@ void MoonboardClient::setLog(BasicLog *_log)
 
 void MoonboardClient::showProblem(Problem *p)
 {
+  if (!isConnected()) return;
+  clearBoard();
   m_btmPnl.lightHolds(p->bottomHolds);
   m_midPnl.lightHolds(p->middleHolds);
   m_topPnl.lightHolds(p->topHolds);
