@@ -50,7 +50,7 @@ void PanelClient::sendCommand(const char *cmd, const char *data)
   m_log->debug("write:%s", sendBuf);
   m_client.write(sendBuf);
   if (data != NULL) {
-    sprintf(sendBuf, " %s\r\n", data);
+    sprintf(sendBuf, " %s", data);
     m_log->debug("write:%s", sendBuf);
     m_client.write(sendBuf);
   }
