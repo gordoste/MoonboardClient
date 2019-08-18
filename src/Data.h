@@ -1,5 +1,5 @@
-#ifndef _MOONBOARDCLIENT_DATA_H
-#define _MOONBOARDCLIENT_DATA_H
+#ifndef _MOONBOARD_DATA_H
+#define _MOONBOARD_DATA_H
 
 #include <Arduino.h>
 
@@ -15,4 +15,4 @@ struct Problem
     char *topHolds;
 };
 
-#endif // #ifndef _MOONBOARDCLIENT_DATA_H
+#endif // #ifndef _MOONBOARD_DATA_H
