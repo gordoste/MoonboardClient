@@ -14,25 +14,30 @@
 #define MB_WILDCARD_STRING "Any"
 #endif
 
-#define MB_BUFFER_SIZE 255
-
 class MoonboardUtils
 {
 public:
-  MoonboardUtils() {};
+  MoonboardUtils(char *buf, uint16_t bufLen);
   bool readProblem(Problem *p, char *in);
-  void beginCatType(char *catType);
-  void endCatType();
-  void addCat(const char *catName);
-  void defineCatType(const char *catType);
+  void addCatType(const char *catType);
+  void selectCat(const char *catTypeName, uint8_t z_catNum);
   void selectCat(uint8_t z_catType, uint8_t z_catNum);
+  void unselectCat(const char *catTypeName);
   void unselectCat(uint8_t z_catType);
+  char *getSelectedCatName(uint8_t z_catType);
+  char *catNumToName(uint8_t z_catType, uint8_t z_catNum);
+  int8_t catTypeNameToNum(const char *catTypeName);
+  int8_t catNameToNum(uint8_t z_catType, const char *catName);
   void getListNameFromCats(char *buf, uint8_t bufLen);
   void findLists();
-  void openList(const char *listName, const char *sortOrder);
+  uint8_t openList(const char *listName, const char *sortOrder);
   void closeList();
   void readNextProblem(Problem *p);
 protected:
+  void beginCatType(char *catTypeName);
+  void endCatType();
+  void addCat(const char *catName);
+private:
   // Internal variables
   char *listNames[MAX_LISTS]; // Pointers to the list names
   char wildcardStr[4] = MB_WILDCARD_STRING;
@@ -40,18 +45,18 @@ protected:
   char *catNames[MAX_CATS]; // Pointers to the category names
   uint8_t numCatNames = 0;
   uint8_t numCatTypes = 0;
-  char *catTypeNames[MAX_CAT_TYPES];
-  uint8_t catNameStartIdxPerType[MAX_CAT_TYPES]; // For each type, what index its list of names starts
-  uint8_t catCountPerType[MAX_CAT_TYPES]; // For each type, how many categories
-  int8_t selectedCatPerType[MAX_CAT_TYPES]; // For each type, which category is selected. 0-based. -1 = NONE
-private:
-  // TEMPORARY VARIABLES (USED FOR A WHILE BUT THEN WORTHLESS)
-  char *t_catBufPtr = catBuf; // Point to unused storage
+  CategoryType m_catTypes[MAX_CAT_TYPES];
   File m_list;
   File m_data;
-  char m_buf[MB_BUFFER_SIZE];
-  uint8_t m_bufLen = MB_BUFFER_SIZE;
+  char *m_buf;
+  uint16_t m_bufLen;
   char listNameBuf[MAX_LISTS * MAX_LISTNAME_SIZE] = ""; // Storage for the list names
+  char *t_catBufPtr = catBuf; // While setting up, point to where unused storage starts 
+  uint8_t _t_uint8_t = 0;
+  uint16_t _t_uint16_t = 0;
+  int8_t _t_int8_t = 0;
+  char *_t_ptr_char = NULL;
+  char t_strtok[2]; // Token for strtok'ing
 };
 
 #endif // #ifndef _MOONBOARD_UTILS_H

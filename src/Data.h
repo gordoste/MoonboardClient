@@ -3,6 +3,8 @@
 
 #include <Arduino.h>
 
+#define MAX_CATTYPENAME_SIZE 8
+
 struct Problem
 {
     char *name;
@@ -13,6 +15,13 @@ struct Problem
     char *bottomHolds;
     char *middleHolds;
     char *topHolds;
+};
+
+struct CategoryType {
+  char name[MAX_CATTYPENAME_SIZE];
+  uint8_t catStartIdx; // What index its list of category names starts
+  uint8_t catCount; // How many categories
+  int8_t selectedCat; // Which category is selected. 0-based. -1 = NONE
 };
 
 #endif // #ifndef _MOONBOARD_DATA_H
