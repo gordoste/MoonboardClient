@@ -93,33 +93,27 @@ void MoonboardUtils::findLists() {
 }
 
 void MoonboardUtils::openList(const char *listName, const char *sortOrder) {
-  strcpy(m_buf, "/");
-  strcat(m_buf, listName);
-  strcat(m_buf, "_");
-  strcat(m_buf, sortOrder);
-  strcat(m_buf, ".lst");
-  File list = SPIFFS.open(m_buf);
-  strcpy(m_buf, "/");
-  strcat(m_buf, listName);
-  strcat(m_buf, ".dat");
-  File data = SPIFFS.open(m_buf);
+  sprintf(m_buf, "/%s_%s.lst", listName, sortOrder);
+  m_list = SPIFFS.open(m_buf);
+  sprintf(m_buf, "/%s.dat", listName);
+  m_data = SPIFFS.open(m_buf);
 }
 
 void MoonboardUtils::closeList() {
-  list.close();
-  data.close();
+  m_list.close();
+  m_data.close();
 }
 
 void MoonboardUtils::readNextProblem(Problem *prob) {
   const char t[2] = ":";
   char *p;
   int offset;
-  list.readStringUntil('\n').toCharArray(m_buf, m_bufLen);
+  m_list.readStringUntil('\n').toCharArray(m_buf, m_bufLen);
   p = strtok(m_buf, t);
   p = strtok(NULL, t);
   offset = atoi(p);
-  data.seek(offset, SeekSet);
-  data.readStringUntil('\n').toCharArray(m_buf, m_bufLen);
+  m_data.seek(offset, SeekSet);
+  m_data.readStringUntil('\n').toCharArray(m_buf, m_bufLen);
   readProblem(prob, m_buf);
 }
 

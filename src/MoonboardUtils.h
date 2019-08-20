@@ -47,8 +47,8 @@ protected:
 private:
   // TEMPORARY VARIABLES (USED FOR A WHILE BUT THEN WORTHLESS)
   char *t_catBufPtr = catBuf; // Point to unused storage
-  File list;
-  File data;
+  File m_list;
+  File m_data;
   char m_buf[MB_BUFFER_SIZE];
   uint8_t m_bufLen = MB_BUFFER_SIZE;
   char listNameBuf[MAX_LISTS * MAX_LISTNAME_SIZE] = ""; // Storage for the list names
