@@ -43,27 +43,27 @@ void MoonboardUtils::addCatType(const char *catType) {
 }
 
 void MoonboardUtils::selectCat(uint8_t z_catType, uint8_t z_catNum) {
-  if (z_catType >= numCatTypes) { Serial.printf("MBU::sC-Bad catType #%d\n", z_catType); }
+  if (z_catType >= numCatTypes) { Serial.printf("MBU::sC - Bad catType #%d\n", z_catType); }
   if (z_catNum >= m_catTypes[z_catType].catCount) {
-    Serial.printf("Bad catNum #%d >= %d\n", z_catNum, m_catTypes[z_catType].catCount);
+    Serial.printf("MBU::sC - Bad catNum #%d >= %d\n", z_catNum, m_catTypes[z_catType].catCount);
   }
   m_catTypes[z_catType].selectedCat = z_catNum;
 }
 
 void MoonboardUtils::selectCat(const char *catTypeName, uint8_t z_catNum) {
   _t_int8_t = catTypeNameToNum(catTypeName);
-  if (_t_int8_t == -1) { Serial.printf("MBU::sC-Bad catType '%s'\n", catTypeName); }
+  if (_t_int8_t == -1) { Serial.printf("MBU::sC - Bad catType '%s'\n", catTypeName); }
   selectCat(_t_int8_t, z_catNum);
 }
 
 void MoonboardUtils::unselectCat(uint8_t z_catType) {
-  if (z_catType >= numCatTypes) { Serial.printf("MBU::uC-Bad catType #%d\n", z_catType); }
+  if (z_catType >= numCatTypes) { Serial.printf("MBU::uC - Bad catType #%d\n", z_catType); }
   m_catTypes[z_catType].selectedCat = -1;
 }
 
 void MoonboardUtils::unselectCat(const char *catTypeName) {
   _t_int8_t = catTypeNameToNum(catTypeName);
-  if (_t_int8_t == -1) { Serial.printf("MBU::uC-Bad catType '%s'\n", catTypeName); }
+  if (_t_int8_t == -1) { Serial.printf("MBU::uC - Bad catType '%s'\n", catTypeName); }
   unselectCat(_t_int8_t);
 }
 
