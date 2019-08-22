@@ -168,28 +168,18 @@ void MoonboardUtils::updateSortOrders() {
   _t_ptr_char = &(m_buf[strlen(m_buf)]);
   for (_t_uint8_t = 0; _t_uint8_t < m_numSortOrders; _t_uint8_t++) {
     sprintf(_t_ptr_char, "_%s.lst", m_sortOrders[_t_uint8_t].name);
-    m_sortOrderExists[_t_uint8_t] = SPIFFS.exists(m_buf);
+    m_sortOrders[_t_uint8_t].exists = SPIFFS.exists(m_buf);
   }
 }
 
-// Search for a sort order with specified name and return the index. -1 if not found
-int8_t MoonboardUtils::sortOrderToNum(const char *sortOrderName) {
+// Search for a sort order with specified name and return the index. NULL if not found
+SortOrder *MoonboardUtils::getSortOrderByName(const char *sortOrderName) {
   for (_t_uint8_t = 0; _t_uint8_t < m_numSortOrders; _t_uint8_t++) {
     if (strcmp(sortOrderName, m_sortOrders[_t_uint8_t].name) == 0) {
-      return _t_uint8_t;
+      return &(m_sortOrders[_t_uint8_t]);
     }
   }
-  return -1;
-}
-
-bool MoonboardUtils::sortOrderExists_s(const char *sortOrderName) {
-  _t_int8_t = sortOrderToNum(sortOrderName);
-  if (_t_int8_t == -1) { Serial.printf("MBU::sOE - Bad sortOrder '%s'\n", sortOrderName); return false; }
-  return sortOrderExists_i(_t_int8_t);
-}
-
-bool MoonboardUtils::sortOrderExists_i(int8_t z_sortOrder) {
-  return m_sortOrderExists[z_sortOrder];
+  return NULL;
 }
 
 // Search SPIFFS for lists. Call after SPIFFS is started.

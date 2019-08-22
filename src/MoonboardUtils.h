@@ -23,6 +23,7 @@ public:
 
   CategoryType *getCatType(int8_t z_catType);
   SortOrder *getSortOrder(int8_t z_sortOrder);
+  SortOrder *getSortOrderByName(const char *sortOrderName);
 
   void selectCat_ss(const char *catTypeName, const char *catName);
   void selectCat_is(int8_t z_catType, const char *catName);
@@ -34,9 +35,6 @@ public:
   char *getSelectedCatName(int8_t z_catType);
   void getSelectedListName(char *buf, uint16_t bufLen);
 
-  int8_t sortOrderToNum(const char *sortOrderName);
-  bool sortOrderExists_s(const char *sortOrderName);
-  bool sortOrderExists_i(int8_t z_sortOrder);
 
   int8_t catTypeToNum(const char *catTypeName);
   char *catNumToName(int8_t z_catType, int8_t z_catNum);
@@ -67,7 +65,6 @@ private:
   CategoryType m_catTypes[MAX_CAT_TYPES];
 
   SortOrder m_sortOrders[MAX_SORT_ORDERS]; // Storage for sort order names
-  bool m_sortOrderExists[MAX_SORT_ORDERS]; // Does each type of index exist for the selected list?
   uint8_t m_numSortOrders = 0;
 
   File m_list;

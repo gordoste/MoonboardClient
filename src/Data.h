@@ -36,6 +36,7 @@ class CategoryType {
 struct SortOrder {
   char name[MAX_SORTORDER_NAME_LEN+1];
   char displayName[MAX_SORTORDER_DSPNAME_LEN+1];
+  bool exists; // Does it exist for the current selection?
 };
 
 #endif // #ifndef _MOONBOARD_DATA_H
