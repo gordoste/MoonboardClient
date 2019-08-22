@@ -6,34 +6,26 @@ MoonboardUtils::MoonboardUtils(char *buf, uint16_t bufLen) {
   m_bufLen = bufLen;
 }
 
-void MoonboardUtils::setSortOrders(const char *sortOrderStr) {
-  m_numSortOrders = 0;
+void MoonboardUtils::addSortOrder(const char *sortOrderStr) {
+  if (m_numSortOrders == MAX_SORT_ORDERS) { Serial.println("MBU::sSO - Hit max #"); return; }
   strcpy(m_buf, sortOrderStr);
-  strcpy(t_strtok, ",");
+  strcpy(t_strtok, ":");
   _t_ptr_char = strtok(m_buf, t_strtok);
-  while (_t_ptr_char != NULL) {
-    if (m_numSortOrders == MAX_SORT_ORDERS) { Serial.println("MBU::sSO - Hit max #"); return; }
-
-    _t_uint8_t = strlen(m_buf) + 1; // +1 for null terminator
-    if (_t_uint8_t > MAX_SORT_ORDER_LEN + 1) { Serial.printf("MBU:sSO - '%s' too long\n", m_buf); return; }
-
-    if (t_sortOrderBufPtr - m_sortOrderBuf + _t_uint8_t > sizeof(m_sortOrderBuf)) {
-      Serial.println("MBU::sSO - Exhausted m_sortOrderBuf");
-      return;
-    }
-
-    m_sortOrderNames[m_numSortOrders++] = strcpy(t_sortOrderBufPtr, m_buf);
-    t_sortOrderBufPtr += _t_uint8_t; 
-    _t_ptr_char = strtok(NULL, t_strtok);
-  }
+  _t_uint8_t = strlen(_t_ptr_char); // +1 for null terminator
+  if (_t_uint8_t > MAX_SORTORDER_NAME_LEN) { Serial.printf("MBU:sSO - '%s' too long\n", _t_ptr_char); return; }
+  strcpy(m_sortOrders[m_numSortOrders].name, _t_ptr_char);
+  _t_ptr_char = strtok(NULL, t_strtok);
+  _t_uint8_t = strlen(_t_ptr_char); // +1 for null terminator
+  if (_t_uint8_t > MAX_SORTORDER_DSPNAME_LEN) { Serial.printf("MBU:sSO - dN '%s' too long\n", _t_ptr_char); return; }
+  strcpy(m_sortOrders[m_numSortOrders].displayName, _t_ptr_char);
+  m_numSortOrders++;
 }
 
 void MoonboardUtils::beginCatType(char *catTypeName) {
+  if (strlen(catTypeName) > MAX_CATTYPENAME_LEN) { Serial.printf("MBU::bCT - '%s' too long\n", catTypeName); return; }
   strncpy(m_catTypes[m_numCatTypes].name, catTypeName, sizeof(CategoryType::name));
   // Ensure string is terminated
   m_catTypes[m_numCatTypes].name[sizeof(CategoryType::name)-1] = '\0';
-
-  m_catTypes[m_numCatTypes].catStartIdx = m_numCatNames;
   m_catTypes[m_numCatTypes].catCount = 0;
   m_catTypes[m_numCatTypes].selectedCat = -1;
 }
@@ -48,9 +40,9 @@ void MoonboardUtils::addCat(const char *catName) {
     Serial.println("MBU::aC - Exhausted catBuf");
     return;
   }
-  m_catNames[m_numCatNames++] = strcpy(t_catBufPtr, catName);
+  strcpy(t_catBufPtr, catName);
+  m_catTypes[m_numCatTypes].addCat(t_catBufPtr);
   t_catBufPtr += _t_uint8_t; 
-  m_catTypes[m_numCatTypes].catCount++;
 }
 
 // Pass colon-delimited string. First token is cat type name, others are taken as category names
@@ -63,6 +55,16 @@ void MoonboardUtils::addCatType(const char *catType) {
     addCat(_t_ptr_char);
   }
   endCatType();
+}
+
+// Get category type by number. Return NULL if it doesn't exist. Good for iterating.
+CategoryType *MoonboardUtils::getCatType(int8_t z_catType) {
+  return (z_catType < m_numCatTypes ? &(m_catTypes[z_catType]) : NULL);
+}
+
+// Get sort order by number. Return NULL if it doesn't exist. Good for iterating.
+SortOrder *MoonboardUtils::getSortOrder(int8_t z_sortOrder) {
+  return (z_sortOrder < m_numSortOrders ? &(m_sortOrders[z_sortOrder]) : NULL);
 }
 
 void MoonboardUtils::selectCat_ss(const char *catTypeName, const char *catName) {
@@ -130,24 +132,25 @@ int8_t MoonboardUtils::catNameToNum(int8_t z_catType, const char *catName) {
 char *MoonboardUtils::catNumToName(int8_t z_catType, int8_t z_catNum) {
   if (z_catType >= m_numCatTypes) { return NULL; }
   if (z_catNum >= m_catTypes[z_catType].catCount) { return NULL; }
-  return m_catNames[m_catTypes[z_catType].catStartIdx + z_catNum];
+  return m_catTypes[z_catType].catNames[z_catNum];
 }
 
 // Get the name of the selected category for specified cat type. Return NULL if none selected
 char *MoonboardUtils::getSelectedCatName(int8_t z_catType) {
-  if (m_catTypes[z_catType].selectedCat == -1) { return NULL; }
-  return m_catNames[m_catTypes[z_catType].catStartIdx + m_catTypes[z_catType].selectedCat];
+  if (z_catType >= m_numCatTypes) { return NULL; }
+  return m_catTypes[z_catType].getSelectedCat();
 }
 
 // Build the list name from the currently category selections
 // For types where no selection is made, the wildcard string is used
-void MoonboardUtils::getSelectedListName(char *buf, int8_t bufLen) {
+void MoonboardUtils::getSelectedListName(char *buf, uint16_t bufLen) {
   uint8_t copied = 0;
   for (uint8_t l_catTypeNum = 0; l_catTypeNum < m_numCatTypes; l_catTypeNum++) {
-    char *l_catName = (m_catTypes[l_catTypeNum].selectedCat == -1) ? m_wildcardStr : getSelectedCatName(l_catTypeNum);
+    char *l_catName = m_catTypes[l_catTypeNum].getSelectedCat();
+    if (l_catName == NULL) { l_catName = m_wildcardStr; }
     uint8_t len = strlen(l_catName);
     if (copied + len + 2 > bufLen) { // add delimiter and null-terminator
-      Serial.printf("MBU::gLNFC - %s too long for buffer\n", l_catName);
+      Serial.printf("MBU::gSLN - %s too long\n", l_catName);
       return;
     }
     strcpy(&(buf[copied]), l_catName);
@@ -161,10 +164,10 @@ void MoonboardUtils::getSelectedListName(char *buf, int8_t bufLen) {
 // Check which category types have an ordered index for the selected list
 void MoonboardUtils::updateSortOrders() {
   m_buf[0] = '/';
-  getSelectedListName(&(m_buf[1]), sizeof(m_buf)-1);
+  getSelectedListName(&(m_buf[1]), m_bufLen-1);
   _t_ptr_char = &(m_buf[strlen(m_buf)]);
   for (_t_uint8_t = 0; _t_uint8_t < m_numSortOrders; _t_uint8_t++) {
-    sprintf(_t_ptr_char, "_%s.lst", m_sortOrderNames[_t_uint8_t]);
+    sprintf(_t_ptr_char, "_%s.lst", m_sortOrders[_t_uint8_t].name);
     m_sortOrderExists[_t_uint8_t] = SPIFFS.exists(m_buf);
   }
 }
@@ -172,7 +175,7 @@ void MoonboardUtils::updateSortOrders() {
 // Search for a sort order with specified name and return the index. -1 if not found
 int8_t MoonboardUtils::sortOrderToNum(const char *sortOrderName) {
   for (_t_uint8_t = 0; _t_uint8_t < m_numSortOrders; _t_uint8_t++) {
-    if (strcmp(sortOrderName, m_sortOrderNames[_t_uint8_t]) == 0) {
+    if (strcmp(sortOrderName, m_sortOrders[_t_uint8_t].name) == 0) {
       return _t_uint8_t;
     }
   }
