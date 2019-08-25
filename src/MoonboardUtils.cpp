@@ -1,29 +1,30 @@
 #include "MoonboardUtils.h"
 
 // Pass a buffer for working
-MoonboardUtils::MoonboardUtils(char *buf, uint16_t bufLen) {
+MoonboardUtils::MoonboardUtils(char *buf, uint16_t bufLen, Stream *stdErr) {
   m_buf = buf;
   m_bufLen = bufLen;
+  m_stdErr = stdErr;
 }
 
 // Add a sort order. Format aaa:bbb where aaa is the string used in .lst filenames, bbb is the display name
 void MoonboardUtils::addSortOrder(const char *sortOrderStr) {
-  if (m_numSortOrders == MAX_SORT_ORDERS) { Serial.println("MBU::sSO - Hit max #"); return; }
+  if (m_numSortOrders == MAX_SORT_ORDERS) { m_stdErr->println("MBU::sSO - Hit max #"); return; }
   strcpy(m_buf, sortOrderStr);
   strcpy(t_strtok, ":");
   _t_ptr_char = strtok(m_buf, t_strtok);
   _t_uint8_t = strlen(_t_ptr_char); // +1 for null terminator
-  if (_t_uint8_t > MAX_SORTORDER_NAME_LEN) { Serial.printf("MBU:sSO - '%s' too long\n", _t_ptr_char); return; }
+  if (_t_uint8_t > MAX_SORTORDER_NAME_LEN) { m_stdErr->printf("MBU:sSO - '%s' too long\n", _t_ptr_char); return; }
   strcpy(m_sortOrders[m_numSortOrders].name, _t_ptr_char);
   _t_ptr_char = strtok(NULL, t_strtok);
   _t_uint8_t = strlen(_t_ptr_char); // +1 for null terminator
-  if (_t_uint8_t > MAX_SORTORDER_DSPNAME_LEN) { Serial.printf("MBU:sSO - dN '%s' too long\n", _t_ptr_char); return; }
+  if (_t_uint8_t > MAX_SORTORDER_DSPNAME_LEN) { m_stdErr->printf("MBU:sSO - dN '%s' too long\n", _t_ptr_char); return; }
   strcpy(m_sortOrders[m_numSortOrders].displayName, _t_ptr_char);
   m_numSortOrders++;
 }
 
 void MoonboardUtils::beginCatType(char *catTypeName) {
-  if (strlen(catTypeName) > MAX_CATTYPENAME_LEN) { Serial.printf("MBU::bCT - '%s' too long\n", catTypeName); return; }
+  if (strlen(catTypeName) > MAX_CATTYPENAME_LEN) { m_stdErr->printf("MBU::bCT - '%s' too long\n", catTypeName); return; }
   strncpy(m_catTypes[m_numCatTypes].name, catTypeName, sizeof(CategoryType::name));
   // Ensure string is terminated
   m_catTypes[m_numCatTypes].name[sizeof(CategoryType::name)-1] = '\0';
@@ -38,7 +39,7 @@ void MoonboardUtils::endCatType() {
 void MoonboardUtils::addCat(const char *catName) {
   _t_uint8_t = strlen(catName) + 1; // +1 for null terminator
   if (t_catBufPtr - m_catBuf + _t_uint8_t > sizeof(m_catBuf)) {
-    Serial.println("MBU::aC - Exhausted catBuf");
+    m_stdErr->println("MBU::aC - Exhausted catBuf");
     return;
   }
   strcpy(t_catBufPtr, catName);
@@ -70,26 +71,26 @@ SortOrder *MoonboardUtils::getSortOrder(int8_t z_sortOrder) {
 
 void MoonboardUtils::selectCat_ss(const char *catTypeName, const char *catName) {
   _t_int8_t = catTypeToNum(catTypeName);
-  if (_t_int8_t == -1) { Serial.printf("MBU::sC - Bad catType '%s'\n", catTypeName); return; }
+  if (_t_int8_t == -1) { m_stdErr->printf("MBU::sC - Bad catType '%s'\n", catTypeName); return; }
   selectCat_is(_t_int8_t, catName);
 }
 
 void MoonboardUtils::selectCat_is(int8_t z_catType, const char *catName) {
   _t_int8_t = catNameToNum(z_catType, catName);
-  if (_t_int8_t == -1) { Serial.printf("MBU::sC - Bad cat '%s'\n", catName); return; }
+  if (_t_int8_t == -1) { m_stdErr->printf("MBU::sC - Bad cat '%s'\n", catName); return; }
   selectCat_ii(z_catType, _t_int8_t);
 }
 
 void MoonboardUtils::selectCat_si(const char *catTypeName, int8_t z_catNum) {
   _t_int8_t = catTypeToNum(catTypeName);
-  if (_t_int8_t == -1) { Serial.printf("MBU::sC - Bad catType '%s'\n", catTypeName); return; }
+  if (_t_int8_t == -1) { m_stdErr->printf("MBU::sC - Bad catType '%s'\n", catTypeName); return; }
   selectCat_ii(_t_int8_t, z_catNum);
 }
 
 void MoonboardUtils::selectCat_ii(int8_t z_catType, int8_t z_catNum) {
-  if (z_catType >= m_numCatTypes) { Serial.printf("MBU::sC - Bad catType #%d\n", z_catType); return; }
+  if (z_catType >= m_numCatTypes) { m_stdErr->printf("MBU::sC - Bad catType #%d\n", z_catType); return; }
   if (z_catNum >= m_catTypes[z_catType].catCount) {
-    Serial.printf("MBU::sC - Bad catNum #%d >= %d\n", z_catNum, m_catTypes[z_catType].catCount);
+    m_stdErr->printf("MBU::sC - Bad catNum #%d >= %d\n", z_catNum, m_catTypes[z_catType].catCount);
     return;
   }
   m_catTypes[z_catType].selectedCat = z_catNum;
@@ -98,12 +99,12 @@ void MoonboardUtils::selectCat_ii(int8_t z_catType, int8_t z_catNum) {
 
 void MoonboardUtils::unselectCat_s(const char *catTypeName) {
   _t_int8_t = catTypeToNum(catTypeName);
-  if (_t_int8_t == -1) { Serial.printf("MBU::uC - Bad catType '%s'\n", catTypeName); return; }
+  if (_t_int8_t == -1) { m_stdErr->printf("MBU::uC - Bad catType '%s'\n", catTypeName); return; }
   unselectCat_i(_t_int8_t);
 }
 
 void MoonboardUtils::unselectCat_i(int8_t z_catType) {
-  if (z_catType >= m_numCatTypes) { Serial.printf("MBU::uC - Bad catType #%d\n", z_catType); return; }
+  if (z_catType >= m_numCatTypes) { m_stdErr->printf("MBU::uC - Bad catType #%d\n", z_catType); return; }
   m_catTypes[z_catType].selectedCat = -1;
   updateStatus();
 }
@@ -155,7 +156,7 @@ void MoonboardUtils::updateStatus() {
     if (l_catName == NULL) { l_catName = m_wildcardStr; }
     uint8_t len = strlen(l_catName);
     if (copied + len + 1 > MAX_LISTNAME_SIZE) { // add delimiter
-      Serial.println("MBU::uS - Too long");
+      m_stdErr->println("MBU::uS - Too long");
       return;
     }
     strcpy(&(m_selectedListName[copied]), l_catName);
@@ -191,7 +192,7 @@ SortOrder *MoonboardUtils::getSortOrderByName(const char *sortOrderName) {
 
 // Opens the specified list using the specified sort order
 uint8_t MoonboardUtils::openList(const char *listName, const char *sortOrder) {
-  if (strlen(listName) > MAX_LISTNAME_SIZE) { Serial.printf("MBU::oL - name '%s' too long\n", listName); return 0; }
+  if (strlen(listName) > MAX_LISTNAME_SIZE) { m_stdErr->printf("MBU::oL - name '%s' too long\n", listName); return 0; }
   sprintf(m_buf, "/%s_%s.lst", listName, sortOrder);
   m_list = SPIFFS.open(m_buf);
   if (!m_list) return 0;
@@ -285,4 +286,31 @@ bool MoonboardUtils::parseProblem(Problem *prob, char *in)
   _t_ptr_char = strtok(NULL, t_strtok);
   prob->topHolds = _t_ptr_char;
   return true;
+}
+
+void MoonboardUtils::showStatus(Stream *outStr) {
+  CategoryType *ptrCT;
+  _t_uint8_t = 0;
+  while ((ptrCT = getCatType(_t_uint8_t++))) {
+    outStr->printf("%s: ", ptrCT->name);
+    for (uint8_t cat_i = 0; cat_i < ptrCT->catCount; cat_i++) {
+      if (cat_i == ptrCT->selectedCat) { outStr->print('['); }
+      outStr->print(ptrCT->catNames[cat_i]);
+      if (cat_i == ptrCT->selectedCat) { outStr->print(']'); }
+      outStr->print('/');
+    }
+    outStr->println(ptrCT->selectedCat == -1 ? "[*]" : "*");
+  }
+  outStr->printf("\nSelected list name: %s\nData file %s\nAvailable sort orders:",
+    m_selectedListName, m_selectedListExists ? "exists" : "does NOT exist");
+  SortOrder *ptrSO;
+  _t_uint8_t = 0;
+  bool t_started = false;
+  while ((ptrSO = getSortOrder(_t_uint8_t++))) {
+    if (ptrSO->exists) {
+      outStr->printf((t_started ? ", %s" : "%s"), ptrSO->displayName);
+      t_started = true;
+    }
+  }
+  outStr->println();
 }
