@@ -12,11 +12,11 @@ void MoonboardUtils::addSortOrder(const char *sortOrderStr) {
   if (m_numSortOrders == MAX_SORT_ORDERS) { m_stdErr->println("MBU::sSO - Hit max #"); return; }
   strcpy(m_buf, sortOrderStr);
   strcpy(t_strtok, ":");
-  _t_ptr_char = strtok(m_buf, t_strtok);
+  _t_ptr_char = strtoke(m_buf, t_strtok);
   _t_uint8_t = strlen(_t_ptr_char); // +1 for null terminator
   if (_t_uint8_t > MAX_SORTORDER_NAME_LEN) { m_stdErr->printf("MBU:sSO - '%s' too long\n", _t_ptr_char); return; }
   strcpy(m_sortOrders[m_numSortOrders].name, _t_ptr_char);
-  _t_ptr_char = strtok(NULL, t_strtok);
+  _t_ptr_char = strtoke(NULL, t_strtok);
   _t_uint8_t = strlen(_t_ptr_char); // +1 for null terminator
   if (_t_uint8_t > MAX_SORTORDER_DSPNAME_LEN) { m_stdErr->printf("MBU:sSO - dN '%s' too long\n", _t_ptr_char); return; }
   strcpy(m_sortOrders[m_numSortOrders].displayName, _t_ptr_char);
@@ -51,9 +51,9 @@ void MoonboardUtils::addCat(const char *catName) {
 void MoonboardUtils::addCatType(const char *catType) {
   strcpy(m_buf, catType);
   strcpy(t_strtok, ":");
-  _t_ptr_char = strtok(m_buf, t_strtok);
+  _t_ptr_char = strtoke(m_buf, t_strtok);
   beginCatType(_t_ptr_char);
-  while ((_t_ptr_char = strtok(NULL, t_strtok))) {
+  while ((_t_ptr_char = strtoke(NULL, t_strtok))) {
     addCat(_t_ptr_char);
   }
   endCatType();
@@ -190,19 +190,21 @@ SortOrder *MoonboardUtils::getSortOrderByName(const char *sortOrderName) {
   return NULL;
 }
 
-// Opens the specified list using the specified sort order
+// Opens the specified list using the specified sort order (NULL for sortOrder means order will be as it is read from the file)
 uint8_t MoonboardUtils::openList(const char *listName, const char *sortOrder) {
-  if (strlen(listName) > MAX_LISTNAME_SIZE) { m_stdErr->printf("MBU::oL - name '%s' too long\n", listName); return 0; }
-  sprintf(m_buf, "/%s_%s.lst", listName, sortOrder);
-  m_list = SPIFFS.open(m_buf);
-  if (!m_list) return 0;
+  if (sortOrder != NULL) {
+    sprintf(m_buf, "/%s_%s.lst", listName, sortOrder);
+    m_list = SPIFFS.open(m_buf);
+    if (!m_list) return 0;
+  }
   sprintf(m_buf, "/%s.dat", listName);
   m_data = SPIFFS.open(m_buf);
   if (!m_data) { m_list.close(); return 0; }
   return 1;
 }
 
-// Opens the list corresponding to the selections made (or not)
+// Opens the list corresponding to the selections made (or not) using the specified sort order
+// (NULL for sortOrder means order will be as it is read from the file)
 uint8_t MoonboardUtils::openSelectedList(const char *sortOrder) {
   return openList(m_selectedListName, sortOrder);
 }
@@ -214,24 +216,24 @@ void MoonboardUtils::closeList() {
 
 // Read next problem from the currently open list
 bool MoonboardUtils::readNextProblem(Problem *prob) {
-  if (!m_list || !m_data) { return false; } // Check list is open
+  if (!m_data) { return false; } // Check list is open
   strcpy(t_strtok, ":");
-  int offset;
-  m_list.readStringUntil('\n').toCharArray(m_buf, m_bufLen);
-  _t_ptr_char = strtok(m_buf, t_strtok);
-  if (_t_ptr_char == NULL) { return false; }
-  _t_ptr_char = strtok(NULL, t_strtok);
-  offset = atoi(_t_ptr_char);
-  m_data.seek(offset, SeekSet);
+  if (m_list) {
+    m_list.readStringUntil('\n').toCharArray(m_buf, m_bufLen);
+    _t_ptr_char = strtoke(m_buf, t_strtok);
+    if (_t_ptr_char == NULL) { return false; }
+    _t_ptr_char = strtoke(NULL, t_strtok);
+    m_data.seek(atoi(_t_ptr_char), SeekSet);
+  }
   m_data.readStringUntil('\n').toCharArray(m_buf, m_bufLen);
   return parseProblem(prob, m_buf);
 }
 
 // Read problems (up to max. # specified) from the open list into given array. Returns # problems read.
-uint8_t MoonboardUtils::readNextProblems(Problem **pArr, uint8_t max) {
+uint8_t MoonboardUtils::readNextProblems(Problem pArr[], uint8_t max) {
   _t_uint8_t = 0;
   while (_t_uint8_t < max) {
-    if (!readNextProblem(pArr[_t_uint8_t])) {
+    if (!readNextProblem(&(pArr[_t_uint8_t]))) {
       return _t_uint8_t;
     }
     _t_uint8_t++;
@@ -243,14 +245,17 @@ uint8_t MoonboardUtils::readNextProblems(Problem **pArr, uint8_t max) {
 bool MoonboardUtils::parseProblem(Problem *prob, char *in)
 {
   strcpy(t_strtok, ":"); // need room for null terminator
-  // First grab the command type
-  _t_ptr_char = strtok(in, t_strtok);
+  _t_ptr_char = strtoke(in, t_strtok);
   if (_t_ptr_char == NULL)
   {
     return false;
   }
-  prob->name = _t_ptr_char;
-  _t_ptr_char = strtok(NULL, t_strtok);
+  if (strlen(_t_ptr_char) > MAX_PROBLEMNAME_LEN) {
+    m_stdErr->printf("MBU::pP - n '%s' too long (%d)\n", _t_ptr_char, strlen(_t_ptr_char));
+    return false;
+  }
+  strcpy(prob->name, _t_ptr_char);
+  _t_ptr_char = strtoke(NULL, t_strtok);
   if (_t_ptr_char == NULL)
   {
     return false;
@@ -262,31 +267,59 @@ bool MoonboardUtils::parseProblem(Problem *prob, char *in)
   if (prob->grade == 0) {
     return false;
   }
-  _t_ptr_char = strtok(NULL, t_strtok);
+  _t_ptr_char = strtoke(NULL, t_strtok);
   prob->rating = atoi(_t_ptr_char);
   if (prob->rating == 0) {
     return false;
   }
-  _t_ptr_char = strtok(NULL, t_strtok);
+  _t_ptr_char = strtoke(NULL, t_strtok);
   prob->repeats = atoi(_t_ptr_char);
   if (prob->repeats == 0) {
     return false;
   }
-  _t_ptr_char = strtok(NULL, t_strtok);
+  _t_ptr_char = strtoke(NULL, t_strtok);
   switch (_t_ptr_char[0]) {
     case 'Y': prob->isBenchmark = true; break;
     case 'N': prob->isBenchmark = false; break;
     default:
       return false;
   }
-  _t_ptr_char = strtok(NULL, t_strtok);
-  prob->bottomHolds = _t_ptr_char;
-  _t_ptr_char = strtok(NULL, t_strtok);
-  prob->middleHolds = _t_ptr_char;
-  _t_ptr_char = strtok(NULL, t_strtok);
-  prob->topHolds = _t_ptr_char;
+  _t_ptr_char = strtoke(NULL, t_strtok);
+  if (strlen(_t_ptr_char) > MAX_HOLDS_PER_PANEL*3) {
+    m_stdErr->printf("MBU::pP - bH '%s' too long\n", _t_ptr_char);
+    return false;
+  }
+  strcpy(prob->bottomHolds, _t_ptr_char);
+  _t_ptr_char = strtoke(NULL, t_strtok);
+  if (strlen(_t_ptr_char) > MAX_HOLDS_PER_PANEL*3) {
+    m_stdErr->printf("MBU::pP - mH '%s' too long\n", _t_ptr_char);
+    return false;
+  }
+  strcpy(prob->middleHolds, _t_ptr_char);
+  _t_ptr_char = strtoke(NULL, t_strtok);
+  if (strlen(_t_ptr_char) > MAX_HOLDS_PER_PANEL*3) {
+    m_stdErr->printf("MBU::pP - tH '%s' too long\n", _t_ptr_char);
+    return false;
+  }
+  strcpy(prob->topHolds, _t_ptr_char);
   return true;
 }
+
+void MoonboardUtils::printProblem(Problem *p, Stream *out) {
+  switch (p->rating) {
+    case 0: _t_ptr_char = "   "; break;
+    case 1: _t_ptr_char = "*  "; break;
+    case 2: _t_ptr_char = "** "; break;
+    case 3: _t_ptr_char = "***"; break;
+    default: m_stdErr->printf("MBU::pTS - %s Weird rating %d ", p->name, p->rating);
+  }
+  strcpy(m_buf, "%XXs %s V%d %-5d %s\n");
+  char t_num[3];
+  snprintf(t_num, 3, "%d", MAX_PROBLEMNAME_LEN);
+  strncpy(&(m_buf[1]), t_num, 2);
+  out->printf(m_buf, p->name, p->isBenchmark ? "(B)" : "   ", p->grade, p->repeats, _t_ptr_char);
+}
+
 
 void MoonboardUtils::showStatus(Stream *outStr) {
   CategoryType *ptrCT;

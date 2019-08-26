@@ -2,6 +2,7 @@
 #define _MOONBOARD_UTILS_H
 
 #include "Data.h"
+#include "StringUtils.h"
 #include <SPIFFS.h>
 
 #define MAX_LISTNAME_SIZE 15
@@ -39,19 +40,21 @@ public:
   char *catNumToName(int8_t z_catType, int8_t z_catNum);
   int8_t catNameToNum(int8_t z_catType, const char *catName);
 
-  uint8_t openList(const char *listName, const char *sortOrder);
   uint8_t openSelectedList(const char *sortOrder);
   void closeList();
 
   bool readNextProblem(Problem *p);
-  uint8_t readNextProblems(Problem **pArr, uint8_t num);
+  uint8_t readNextProblems(Problem pArr[], uint8_t num);
+
   bool parseProblem(Problem *p, char *in);
+  void printProblem(Problem *p, Stream *out);
 
   void showStatus(Stream *outStr);
 protected:
   void beginCatType(char *catTypeName);
   void endCatType();
   void addCat(const char *catName);
+  uint8_t openList(const char *listName, const char *sortOrder);
   void updateStatus();
 private:
   const char m_wildcardStr[4] = MB_WILDCARD_STRING;
@@ -67,11 +70,11 @@ private:
   bool m_selectedListExists;
   char m_selectedListName[MAX_LISTNAME_SIZE+1];
 
-  File m_list;
-  File m_data;
+  File m_list, m_data;
   char *m_buf;
   uint16_t m_bufLen;
   char *t_catBufPtr = m_catBuf; // While setting up, point to where unused storage starts 
+
   uint8_t _t_uint8_t = 0;
   int8_t _t_int8_t = 0;
   char *_t_ptr_char = NULL;
