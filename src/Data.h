@@ -7,17 +7,19 @@
 #define MAX_CATS_PER_CATTYPE 5
 #define MAX_SORTORDER_NAME_LEN 4
 #define MAX_SORTORDER_DSPNAME_LEN 8
+#define MAX_PROBLEMNAME_LEN 32
+#define MAX_HOLDS_PER_PANEL 10
 
 struct Problem
 {
-    char *name;
+    char name[MAX_PROBLEMNAME_LEN+1];
     uint8_t grade;
     uint8_t rating;
-    uint8_t repeats;
+    uint16_t repeats;
     bool isBenchmark;
-    char *bottomHolds;
-    char *middleHolds;
-    char *topHolds;
+    char bottomHolds[MAX_HOLDS_PER_PANEL*3]; // 3 = 2 for hold, 1 for delim or null
+    char middleHolds[MAX_HOLDS_PER_PANEL*3];
+    char topHolds[MAX_HOLDS_PER_PANEL*3];
 };
 
 class CategoryType {
