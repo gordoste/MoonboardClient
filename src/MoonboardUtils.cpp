@@ -217,8 +217,8 @@ void MoonboardUtils::closeList() {
 // Read next problem from the currently open list
 bool MoonboardUtils::readNextProblem(Problem *prob) {
   if (!m_data) { return false; } // Check list is open
-  strcpy(t_strtok, ":");
   if (m_list) {
+    strcpy(t_strtok, ":");
     m_list.readStringUntil('\n').toCharArray(m_buf, m_bufLen);
     _t_ptr_char = strtoke(m_buf, t_strtok);
     if (_t_ptr_char == NULL) { return false; }
@@ -226,6 +226,7 @@ bool MoonboardUtils::readNextProblem(Problem *prob) {
     m_data.seek(atoi(_t_ptr_char), SeekSet);
   }
   m_data.readStringUntil('\n').toCharArray(m_buf, m_bufLen);
+  if (strlen(m_buf) == 0) { return false; }
   return parseProblem(prob, m_buf);
 }
 
@@ -244,7 +245,7 @@ uint8_t MoonboardUtils::readNextProblems(Problem pArr[], uint8_t max) {
 // read the string, placing data in the problem struct passed. Return true on success
 bool MoonboardUtils::parseProblem(Problem *prob, char *in)
 {
-  strcpy(t_strtok, ":"); // need room for null terminator
+  strcpy(t_strtok, "|"); // need room for null terminator
   _t_ptr_char = strtoke(in, t_strtok);
   if (_t_ptr_char == NULL)
   {
@@ -258,26 +259,46 @@ bool MoonboardUtils::parseProblem(Problem *prob, char *in)
   _t_ptr_char = strtoke(NULL, t_strtok);
   if (_t_ptr_char == NULL)
   {
+    m_stdErr->printf("MBU::pP - '%s' no grade\n", prob->name);
     return false;
   }
   if (_t_ptr_char[0] != 'V') {
+    m_stdErr->printf("MBU::pP - '%s' bad grade\n", prob->name);
     return false;
   }
   prob->grade = atoi(&(_t_ptr_char[1]));
   if (prob->grade == 0) {
+    m_stdErr->printf("MBU::pP - '%s' NaN grade\n", prob->name);
     return false;
   }
   _t_ptr_char = strtoke(NULL, t_strtok);
+  if (_t_ptr_char == NULL)
+  {
+    m_stdErr->printf("MBU::pP - '%s' no rating\n", prob->name);
+    return false;
+  }
   prob->rating = atoi(_t_ptr_char);
   if (prob->rating == 0) {
+    m_stdErr->printf("MBU::pP - '%s' NaN rating\n", prob->name);
     return false;
   }
   _t_ptr_char = strtoke(NULL, t_strtok);
+  if (_t_ptr_char == NULL)
+  {
+    m_stdErr->printf("MBU::pP - '%s' no repeats\n", prob->name);
+    return false;
+  }
   prob->repeats = atoi(_t_ptr_char);
   if (prob->repeats == 0) {
+    m_stdErr->printf("MBU::pP - '%s' NaN repeats\n", prob->name);
     return false;
   }
   _t_ptr_char = strtoke(NULL, t_strtok);
+  if (_t_ptr_char == NULL)
+  {
+    m_stdErr->printf("MBU::pP - '%s' no BM\n", prob->name);
+    return false;
+  }
   switch (_t_ptr_char[0]) {
     case 'Y': prob->isBenchmark = true; break;
     case 'N': prob->isBenchmark = false; break;
@@ -285,18 +306,33 @@ bool MoonboardUtils::parseProblem(Problem *prob, char *in)
       return false;
   }
   _t_ptr_char = strtoke(NULL, t_strtok);
+  if (_t_ptr_char == NULL)
+  {
+    m_stdErr->printf("MBU::pP - '%s' no BH\n", prob->name);
+    return false;
+  }
   if (strlen(_t_ptr_char) > MAX_HOLDS_PER_PANEL*3) {
     m_stdErr->printf("MBU::pP - bH '%s' too long\n", _t_ptr_char);
     return false;
   }
   strcpy(prob->bottomHolds, _t_ptr_char);
   _t_ptr_char = strtoke(NULL, t_strtok);
+  if (_t_ptr_char == NULL)
+  {
+    m_stdErr->printf("MBU::pP - '%s' no MH\n", prob->name);
+    return false;
+  }
   if (strlen(_t_ptr_char) > MAX_HOLDS_PER_PANEL*3) {
     m_stdErr->printf("MBU::pP - mH '%s' too long\n", _t_ptr_char);
     return false;
   }
   strcpy(prob->middleHolds, _t_ptr_char);
   _t_ptr_char = strtoke(NULL, t_strtok);
+  if (_t_ptr_char == NULL)
+  {
+    m_stdErr->printf("MBU::pP - '%s' no TH\n", prob->name);
+    return false;
+  }
   if (strlen(_t_ptr_char) > MAX_HOLDS_PER_PANEL*3) {
     m_stdErr->printf("MBU::pP - tH '%s' too long\n", _t_ptr_char);
     return false;
