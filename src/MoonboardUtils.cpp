@@ -263,12 +263,12 @@ bool MoonboardUtils::parseProblem(Problem *prob, char *in)
     return false;
   }
   if (_t_ptr_char[0] != 'V') {
-    m_stdErr->printf("MBU::pP - '%s' bad grade\n", prob->name);
+    m_stdErr->printf("MBU::pP - '%s' no V\n", prob->name);
     return false;
   }
   prob->grade = atoi(&(_t_ptr_char[1]));
   if (prob->grade == 0) {
-    m_stdErr->printf("MBU::pP - '%s' NaN grade\n", prob->name);
+    m_stdErr->printf("MBU::pP - '%s' bad grade\n", prob->name);
     return false;
   }
   _t_ptr_char = strtoke(NULL, t_strtok);
@@ -279,7 +279,7 @@ bool MoonboardUtils::parseProblem(Problem *prob, char *in)
   }
   prob->rating = atoi(_t_ptr_char);
   if (prob->rating == 0) {
-    m_stdErr->printf("MBU::pP - '%s' NaN rating\n", prob->name);
+    m_stdErr->printf("MBU::pP - '%s' bad rating\n", prob->name);
     return false;
   }
   _t_ptr_char = strtoke(NULL, t_strtok);
@@ -289,7 +289,7 @@ bool MoonboardUtils::parseProblem(Problem *prob, char *in)
     return false;
   }
   prob->repeats = atoi(_t_ptr_char);
-  if (prob->repeats == 0) {
+  if (prob->repeats == 0 && (_t_ptr_char[0] != '0' || _t_ptr_char[1] != '\0')) {
     m_stdErr->printf("MBU::pP - '%s' NaN repeats\n", prob->name);
     return false;
   }
@@ -342,18 +342,20 @@ bool MoonboardUtils::parseProblem(Problem *prob, char *in)
 }
 
 void MoonboardUtils::printProblem(Problem *p, Stream *out) {
-  switch (p->rating) {
-    case 0: _t_ptr_char = "   "; break;
-    case 1: _t_ptr_char = "*  "; break;
-    case 2: _t_ptr_char = "** "; break;
-    case 3: _t_ptr_char = "***"; break;
-    default: m_stdErr->printf("MBU::pTS - %s Weird rating %d ", p->name, p->rating);
-  }
-  strcpy(m_buf, "%XXs %s V%d %-5d %s\n");
+  strcpy(m_buf, "%XXs %s V%d %-5d");
   char t_num[3];
   snprintf(t_num, 3, "%d", MAX_PROBLEMNAME_LEN);
   strncpy(&(m_buf[1]), t_num, 2);
-  out->printf(m_buf, p->name, p->isBenchmark ? "(B)" : "   ", p->grade, p->repeats, _t_ptr_char);
+  out->printf(m_buf, p->name, p->isBenchmark ? "(B)" : "   ", p->grade, p->repeats);
+  switch (p->rating) {
+    case 0: out->println("   "); break;
+    case 1: out->println("*  "); break;
+    case 2: out->println("** "); break;
+    case 3: out->println("***"); break;
+    default:
+      m_stdErr->printf("MBU::pTS - %s Weird rating %d ", p->name, p->rating);
+      out->println("???");
+  }
 }
 
 
