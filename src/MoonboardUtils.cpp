@@ -358,7 +358,6 @@ void MoonboardUtils::printProblem(Problem *p, Print *out) {
   }
 }
 
-
 void MoonboardUtils::showStatus(Print *outStr) {
   CategoryType *ptrCT;
   _t_uint8_t = 0;
@@ -385,3 +384,6 @@ void MoonboardUtils::showStatus(Print *outStr) {
   }
   outStr->println();
 }
+
+uint8_t MoonboardUtils::getNumCatTypes() { return m_numCatTypes; }
+uint8_t MoonboardUtils::getNumSortOrders() { return m_numSortOrders; }

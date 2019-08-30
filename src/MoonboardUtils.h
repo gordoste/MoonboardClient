@@ -25,6 +25,9 @@ public:
   SortOrder *getSortOrder(int8_t z_sortOrder);
   SortOrder *getSortOrderByName(const char *sortOrderName);
 
+  uint8_t getNumCatTypes();
+  uint8_t getNumSortOrders();
+
   void selectCat_ss(const char *catTypeName, const char *catName);
   void selectCat_is(int8_t z_catType, const char *catName);
   void selectCat_si(const char *catTypeName, int8_t z_catNum);
