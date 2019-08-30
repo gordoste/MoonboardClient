@@ -12,11 +12,11 @@ void MoonboardUtils::addSortOrder(const char *sortOrderStr) {
   if (m_numSortOrders == MAX_SORT_ORDERS) { m_stdErr->println("MBU::sSO - Hit max #"); return; }
   strcpy(m_buf, sortOrderStr);
   strcpy(t_strtok, ":");
-  _t_ptr_char = strtoke(m_buf, t_strtok);
+  _t_ptr_char = StringUtils::strtoke(m_buf, t_strtok);
   _t_uint8_t = strlen(_t_ptr_char); // +1 for null terminator
   if (_t_uint8_t > MAX_SORTORDER_NAME_LEN) { m_stdErr->printf("MBU:sSO - '%s' too long\n", _t_ptr_char); return; }
   strcpy(m_sortOrders[m_numSortOrders].name, _t_ptr_char);
-  _t_ptr_char = strtoke(NULL, t_strtok);
+  _t_ptr_char = StringUtils::strtoke(NULL, t_strtok);
   _t_uint8_t = strlen(_t_ptr_char); // +1 for null terminator
   if (_t_uint8_t > MAX_SORTORDER_DSPNAME_LEN) { m_stdErr->printf("MBU:sSO - dN '%s' too long\n", _t_ptr_char); return; }
   strcpy(m_sortOrders[m_numSortOrders].displayName, _t_ptr_char);
@@ -51,9 +51,9 @@ void MoonboardUtils::addCat(const char *catName) {
 void MoonboardUtils::addCatType(const char *catType) {
   strcpy(m_buf, catType);
   strcpy(t_strtok, ":");
-  _t_ptr_char = strtoke(m_buf, t_strtok);
+  _t_ptr_char = StringUtils::strtoke(m_buf, t_strtok);
   beginCatType(_t_ptr_char);
-  while ((_t_ptr_char = strtoke(NULL, t_strtok))) {
+  while ((_t_ptr_char = StringUtils::strtoke(NULL, t_strtok))) {
     addCat(_t_ptr_char);
   }
   endCatType();
@@ -220,9 +220,9 @@ bool MoonboardUtils::readNextProblem(Problem *prob) {
   if (m_list) {
     strcpy(t_strtok, ":");
     m_list.readStringUntil('\n').toCharArray(m_buf, m_bufLen);
-    _t_ptr_char = strtoke(m_buf, t_strtok);
+    _t_ptr_char = StringUtils::strtoke(m_buf, t_strtok);
     if (_t_ptr_char == NULL) { return false; }
-    _t_ptr_char = strtoke(NULL, t_strtok);
+    _t_ptr_char = StringUtils::strtoke(NULL, t_strtok);
     m_data.seek(atoi(_t_ptr_char), SeekSet);
   }
   m_data.readStringUntil('\n').toCharArray(m_buf, m_bufLen);
@@ -246,7 +246,7 @@ uint8_t MoonboardUtils::readNextProblems(Problem pArr[], uint8_t max) {
 bool MoonboardUtils::parseProblem(Problem *prob, char *in)
 {
   strcpy(t_strtok, "|"); // need room for null terminator
-  _t_ptr_char = strtoke(in, t_strtok);
+  _t_ptr_char = StringUtils::strtoke(in, t_strtok);
   if (_t_ptr_char == NULL)
   {
     return false;
@@ -256,7 +256,7 @@ bool MoonboardUtils::parseProblem(Problem *prob, char *in)
     return false;
   }
   strcpy(prob->name, _t_ptr_char);
-  _t_ptr_char = strtoke(NULL, t_strtok);
+  _t_ptr_char = StringUtils::strtoke(NULL, t_strtok);
   if (_t_ptr_char == NULL)
   {
     m_stdErr->printf("MBU::pP - '%s' no grade\n", prob->name);
@@ -271,7 +271,7 @@ bool MoonboardUtils::parseProblem(Problem *prob, char *in)
     m_stdErr->printf("MBU::pP - '%s' bad grade\n", prob->name);
     return false;
   }
-  _t_ptr_char = strtoke(NULL, t_strtok);
+  _t_ptr_char = StringUtils::strtoke(NULL, t_strtok);
   if (_t_ptr_char == NULL)
   {
     m_stdErr->printf("MBU::pP - '%s' no rating\n", prob->name);
@@ -282,7 +282,7 @@ bool MoonboardUtils::parseProblem(Problem *prob, char *in)
     m_stdErr->printf("MBU::pP - '%s' bad rating\n", prob->name);
     return false;
   }
-  _t_ptr_char = strtoke(NULL, t_strtok);
+  _t_ptr_char = StringUtils::strtoke(NULL, t_strtok);
   if (_t_ptr_char == NULL)
   {
     m_stdErr->printf("MBU::pP - '%s' no repeats\n", prob->name);
@@ -293,7 +293,7 @@ bool MoonboardUtils::parseProblem(Problem *prob, char *in)
     m_stdErr->printf("MBU::pP - '%s' NaN repeats\n", prob->name);
     return false;
   }
-  _t_ptr_char = strtoke(NULL, t_strtok);
+  _t_ptr_char = StringUtils::strtoke(NULL, t_strtok);
   if (_t_ptr_char == NULL)
   {
     m_stdErr->printf("MBU::pP - '%s' no BM\n", prob->name);
@@ -305,7 +305,7 @@ bool MoonboardUtils::parseProblem(Problem *prob, char *in)
     default:
       return false;
   }
-  _t_ptr_char = strtoke(NULL, t_strtok);
+  _t_ptr_char = StringUtils::strtoke(NULL, t_strtok);
   if (_t_ptr_char == NULL)
   {
     m_stdErr->printf("MBU::pP - '%s' no BH\n", prob->name);
@@ -316,7 +316,7 @@ bool MoonboardUtils::parseProblem(Problem *prob, char *in)
     return false;
   }
   strcpy(prob->bottomHolds, _t_ptr_char);
-  _t_ptr_char = strtoke(NULL, t_strtok);
+  _t_ptr_char = StringUtils::strtoke(NULL, t_strtok);
   if (_t_ptr_char == NULL)
   {
     m_stdErr->printf("MBU::pP - '%s' no MH\n", prob->name);
@@ -327,7 +327,7 @@ bool MoonboardUtils::parseProblem(Problem *prob, char *in)
     return false;
   }
   strcpy(prob->middleHolds, _t_ptr_char);
-  _t_ptr_char = strtoke(NULL, t_strtok);
+  _t_ptr_char = StringUtils::strtoke(NULL, t_strtok);
   if (_t_ptr_char == NULL)
   {
     m_stdErr->printf("MBU::pP - '%s' no TH\n", prob->name);
