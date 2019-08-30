@@ -49,7 +49,7 @@ public:
   bool parseProblem(Problem *p, char *in);
   void printProblem(Problem *p, Print *out);
 
-  void showStatus(Stream *outStr);
+  void showStatus(Print *outStr);
 protected:
   void beginCatType(char *catTypeName);
   void endCatType();

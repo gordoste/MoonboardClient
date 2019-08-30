@@ -359,7 +359,7 @@ void MoonboardUtils::printProblem(Problem *p, Print *out) {
 }
 
 
-void MoonboardUtils::showStatus(Stream *outStr) {
+void MoonboardUtils::showStatus(Print *outStr) {
   CategoryType *ptrCT;
   _t_uint8_t = 0;
   while ((ptrCT = getCatType(_t_uint8_t++))) {
