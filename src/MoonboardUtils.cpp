@@ -1,7 +1,7 @@
 #include "MoonboardUtils.h"
 
 // Pass a buffer for working
-MoonboardUtils::MoonboardUtils(char *buf, uint16_t bufLen, Stream *stdErr) {
+MoonboardUtils::MoonboardUtils(char *buf, uint16_t bufLen, Print *stdErr) {
   m_buf = buf;
   m_bufLen = bufLen;
   m_stdErr = stdErr;
@@ -341,7 +341,7 @@ bool MoonboardUtils::parseProblem(Problem *prob, char *in)
   return true;
 }
 
-void MoonboardUtils::printProblem(Problem *p, Stream *out) {
+void MoonboardUtils::printProblem(Problem *p, Print *out) {
   strcpy(m_buf, "%XXs %s V%d %-5d");
   char t_num[3];
   snprintf(t_num, 3, "%d", MAX_PROBLEMNAME_LEN);

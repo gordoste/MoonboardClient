@@ -17,7 +17,7 @@
 class MoonboardUtils
 {
 public:
-  MoonboardUtils(char *buf, uint16_t bufLen, Stream *stdErr);
+  MoonboardUtils(char *buf, uint16_t bufLen, Print *stdErr);
   void addCatType(const char *catType);
   void addSortOrder(const char *sortOrderStr);
 
@@ -47,7 +47,7 @@ public:
   uint8_t readNextProblems(Problem pArr[], uint8_t num);
 
   bool parseProblem(Problem *p, char *in);
-  void printProblem(Problem *p, Stream *out);
+  void printProblem(Problem *p, Print *out);
 
   void showStatus(Stream *outStr);
 protected:
@@ -80,7 +80,7 @@ private:
   char *_t_ptr_char = NULL;
   char t_strtok[2]; // Token storage for strtok'ing
 
-  Stream *m_stdErr;
+  Print *m_stdErr;
 };
 
 #endif // #ifndef _MOONBOARD_UTILS_H
