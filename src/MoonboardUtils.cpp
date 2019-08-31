@@ -358,20 +358,26 @@ void MoonboardUtils::printProblem(Problem *p, Print *out) {
   }
 }
 
-void MoonboardUtils::showStatus(Print *outStr) {
-  CategoryType *ptrCT;
-  _t_uint8_t = 0;
-  while ((ptrCT = getCatType(_t_uint8_t++))) {
-    outStr->printf("%s: ", ptrCT->name);
-    for (uint8_t cat_i = 0; cat_i < ptrCT->catCount; cat_i++) {
-      if (cat_i == ptrCT->selectedCat) { outStr->print('['); }
-      outStr->print(ptrCT->catNames[cat_i]);
-      if (cat_i == ptrCT->selectedCat) { outStr->print(']'); }
-      outStr->print('/');
-    }
-    outStr->println(ptrCT->selectedCat == -1 ? "[*]" : "*");
+void MoonboardUtils::showCatType(Print *outStr, CategoryType *ptrCT) {
+  outStr->printf("%s: ", ptrCT->name);
+  for (uint8_t cat_i = 0; cat_i < ptrCT->catCount; cat_i++) {
+    if (cat_i == ptrCT->selectedCat) { outStr->print('['); }
+    outStr->print(ptrCT->catNames[cat_i]);
+    if (cat_i == ptrCT->selectedCat) { outStr->print(']'); }
+    outStr->print('/');
   }
-  outStr->printf("\nSelected list name: %s\nData file %s\nAvailable sort orders:",
+  outStr->println(ptrCT->selectedCat == -1 ? "[*]" : "*");
+}
+
+void MoonboardUtils::showAllCatTypes(Print *outStr) {
+  CategoryType *ptrCT;
+  for (_t_uint8_t = 0; (ptrCT = getCatType(_t_uint8_t)); _t_uint8_t++) {
+    showCatType(outStr, ptrCT);
+  }
+}
+
+void MoonboardUtils::showStatus(Print *outStr) {
+  outStr->printf("Selected list name: %s. Data file %s. Available sort orders: ",
     m_selectedListName, m_selectedListExists ? "exists" : "does NOT exist");
   SortOrder *ptrSO;
   _t_uint8_t = 0;

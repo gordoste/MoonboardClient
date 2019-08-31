@@ -52,6 +52,8 @@ public:
   bool parseProblem(Problem *p, char *in);
   void printProblem(Problem *p, Print *out);
 
+  void showCatType(Print *outStr, CategoryType *ptrCT);
+  void showAllCatTypes(Print *outStr);
   void showStatus(Print *outStr);
 protected:
   void beginCatType(char *catTypeName);
