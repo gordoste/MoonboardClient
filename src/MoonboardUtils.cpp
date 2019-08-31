@@ -1,15 +1,16 @@
 #include "MoonboardUtils.h"
 
 // Pass a buffer for working
-MoonboardUtils::MoonboardUtils(char *buf, uint16_t bufLen, Print *stdErr) {
+void MoonboardUtils::begin(char *buf, uint16_t bufLen, Print *stdErr) {
   m_buf = buf;
   m_bufLen = bufLen;
   m_stdErr = stdErr;
+  findCustomLists();
 }
 
 // Add a sort order. Format aaa:bbb where aaa is the string used in .lst filenames, bbb is the display name
 void MoonboardUtils::addSortOrder(const char *sortOrderStr) {
-  if (m_numSortOrders == MAX_SORT_ORDERS) { m_stdErr->println("MBU::sSO - Hit max #"); return; }
+  if (m_numSortOrders == MAX_SORT_ORDERS) { m_stdErr->println(F("MBU::sSO - Hit max #")); return; }
   strcpy(m_buf, sortOrderStr);
   strcpy(t_strtok, ":");
   _t_ptr_char = StringUtils::strtoke(m_buf, t_strtok);
@@ -39,7 +40,7 @@ void MoonboardUtils::endCatType() {
 void MoonboardUtils::addCat(const char *catName) {
   _t_uint8_t = strlen(catName) + 1; // +1 for null terminator
   if (t_catBufPtr - m_catBuf + _t_uint8_t > sizeof(m_catBuf)) {
-    m_stdErr->println("MBU::aC - Exhausted catBuf");
+    m_stdErr->println(F("MBU::aC - Exhausted catBuf"));
     return;
   }
   strcpy(t_catBufPtr, catName);
@@ -143,8 +144,8 @@ char *MoonboardUtils::getSelectedCatName(int8_t z_catType) {
   return m_catTypes[z_catType].getSelectedCat();
 }
 
-const char *MoonboardUtils::getSelectedListName() {
-  return m_selectedListName;
+const char *MoonboardUtils::getSelectedFilteredListName() {
+  return m_selectedFiltListName;
 }
 
 void MoonboardUtils::updateStatus() {
@@ -156,22 +157,22 @@ void MoonboardUtils::updateStatus() {
     if (l_catName == NULL) { l_catName = m_wildcardStr; }
     uint8_t len = strlen(l_catName);
     if (copied + len + 1 > MAX_LISTNAME_SIZE) { // add delimiter
-      m_stdErr->println("MBU::uS - Too long");
+      m_stdErr->println(F("MBU::uS - Too long"));
       return;
     }
-    strcpy(&(m_selectedListName[copied]), l_catName);
+    strcpy(&(m_selectedFiltListName[copied]), l_catName);
     copied += len;
     if (m_numCatTypes - l_catTypeNum > 1) { // Skip delimiter on last one
-      strcpy(&(m_selectedListName[copied++]), "_");
+      strcpy(&(m_selectedFiltListName[copied++]), "_");
     }
   }
 
   // Check which category types have an ordered index for the selected list
   m_buf[0] = '/';
-  strcpy(&(m_buf[1]), m_selectedListName);
+  strcpy(&(m_buf[1]), m_selectedFiltListName);
   _t_ptr_char = &(m_buf[strlen(m_buf)]); // points to the null terminator after /filename
   strcpy(_t_ptr_char, ".dat"); // Check if the problem data file (/filename.dat) exists
-  m_selectedListExists = SPIFFS.exists(m_buf);
+  m_selectedFiltListExists = SPIFFS.exists(m_buf);
   // iterate sort orders
   for (_t_uint8_t = 0; _t_uint8_t < m_numSortOrders; _t_uint8_t++) {
     // check whether an index file (/filename_sortname.lst) exists for each
@@ -191,7 +192,8 @@ SortOrder *MoonboardUtils::getSortOrderByName(const char *sortOrderName) {
 }
 
 // Opens the specified list using the specified sort order (NULL for sortOrder means order will be as it is read from the file)
-uint8_t MoonboardUtils::openList(const char *listName, const char *sortOrder) {
+uint8_t MoonboardUtils::openFilteredList(const char *listName, const char *sortOrder) {
+  closeList();
   if (sortOrder != NULL) {
     sprintf(m_buf, "/%s_%s.lst", listName, sortOrder);
     m_list = SPIFFS.open(m_buf);
@@ -200,18 +202,20 @@ uint8_t MoonboardUtils::openList(const char *listName, const char *sortOrder) {
   sprintf(m_buf, "/%s.dat", listName);
   m_data = SPIFFS.open(m_buf);
   if (!m_data) { m_list.close(); return 0; }
+  m_listType = FILTERED;
   return 1;
 }
 
 // Opens the list corresponding to the selections made (or not) using the specified sort order
 // (NULL for sortOrder means order will be as it is read from the file)
-uint8_t MoonboardUtils::openSelectedList(const char *sortOrder) {
-  return openList(m_selectedListName, sortOrder);
+uint8_t MoonboardUtils::openSelectedFilteredList(const char *sortOrder) {
+  return openFilteredList(m_selectedFiltListName, sortOrder);
 }
 
 void MoonboardUtils::closeList() {
   m_list.close();
   m_data.close();
+  m_listType = NONE;
 }
 
 // Read next problem from the currently open list
@@ -377,19 +381,69 @@ void MoonboardUtils::showAllCatTypes(Print *outStr) {
 }
 
 void MoonboardUtils::showStatus(Print *outStr) {
-  outStr->printf("Selected list name: %s. Data file %s. Available sort orders: ",
-    m_selectedListName, m_selectedListExists ? "exists" : "does NOT exist");
-  SortOrder *ptrSO;
-  _t_uint8_t = 0;
-  bool t_started = false;
-  while ((ptrSO = getSortOrder(_t_uint8_t++))) {
-    if (ptrSO->exists) {
-      outStr->printf((t_started ? ", %s" : "%s"), ptrSO->displayName);
-      t_started = true;
-    }
+  switch (m_listType) {
+    default:
+      break;
+    case NONE:
+      outStr->println("No problem list selected currently.");
+      break;
+    case CUSTOM:
+      outStr->printf("Custom list '%s' selected.\n", m_customListNames[m_selectedCustomList]);
+      break;
+    case FILTERED:
+      outStr->printf("Filter name '%s' selected. Available sort orders: ", m_selectedFiltListName);
+      SortOrder *ptrSO;
+      _t_uint8_t = 0;
+      bool t_started = false;
+      while ((ptrSO = getSortOrder(_t_uint8_t++))) {
+        if (ptrSO->exists) {
+          outStr->printf((t_started ? ", %s" : "%s"), ptrSO->displayName);
+          t_started = true;
+        }
+      }
+      outStr->println();
+      break;
   }
-  outStr->println();
 }
 
 uint8_t MoonboardUtils::getNumCatTypes() { return m_numCatTypes; }
 uint8_t MoonboardUtils::getNumSortOrders() { return m_numSortOrders; }
+uint8_t MoonboardUtils::getNumCustomLists() { return m_numCustomLists; }
+
+uint8_t MoonboardUtils::findCustomLists() {
+  m_numCustomLists = 0;
+  File root = SPIFFS.open("/");
+  if (!root) {
+    m_stdErr->println(F("Can't open FS. Is it initialised?"));
+    return 0;
+  }
+  File f;
+  while ((f = root.openNextFile()) && (m_numCustomLists < MAX_CUSTOM_LISTS)) {
+    if (strncmp("/l/", f.name(), 3) == 0) {
+      _t_uint8_t = strlen(f.name());
+      if (strncmp(&(f.name()[_t_uint8_t-4]), ".dat", 4) == 0) {
+        strncpy(m_customListNames[m_numCustomLists], &(f.name()[3]), _t_uint8_t-7);
+        m_customListNames[m_numCustomLists][_t_uint8_t-4] = '\0';
+        Serial.printf("CL'%s'\n",m_customListNames[m_numCustomLists]);
+        m_numCustomLists++;
+      }
+    }
+  }
+  root.close();
+  return m_numCustomLists;
+}
+
+bool MoonboardUtils::openCustomList(uint8_t z_listNum) {
+  closeList();
+  if (z_listNum >= m_numCustomLists) return false;
+  sprintf(m_buf, "/l/%s.dat", m_customListNames[z_listNum]);
+  m_data = SPIFFS.open(m_buf);
+  if (!m_data) return false;
+  m_selectedCustomList = z_listNum;
+  m_listType = CUSTOM;
+  return true;
+}
+
+const char *MoonboardUtils::customListNumToName(uint8_t z_listNum) {
+  return z_listNum < m_numCustomLists ? m_customListNames[z_listNum] : NULL;
+}
