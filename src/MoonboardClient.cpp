@@ -62,9 +62,9 @@ void MoonboardClient::begin(BasicLog *_log)
     m_btmPnl.begin(_log);
     m_midPnl.begin(_log);
     m_topPnl.begin(_log);
-    m_btmPnl.setAddress(IPAddress(192,168,20,59),4011);
-    m_midPnl.setAddress(IPAddress(192,168,20,59),4012);
-    m_topPnl.setAddress(IPAddress(192,168,20,59),4013);
+    m_btmPnl.setAddress(IPAddress(MB_IP_ADDRESS),MB_PANEL_BTM_PORT);
+    m_midPnl.setAddress(IPAddress(MB_IP_ADDRESS),MB_PANEL_MID_PORT);
+    m_topPnl.setAddress(IPAddress(MB_IP_ADDRESS),MB_PANEL_TOP_PORT);
 }
 
 
