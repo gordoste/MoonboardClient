@@ -424,7 +424,6 @@ uint8_t MoonboardUtils::findCustomLists() {
       if (strncmp(&(f.name()[_t_uint8_t-4]), ".dat", 4) == 0) {
         strncpy(m_customListNames[m_numCustomLists], &(f.name()[3]), _t_uint8_t-7);
         m_customListNames[m_numCustomLists][_t_uint8_t-4] = '\0';
-        Serial.printf("CL'%s'\n",m_customListNames[m_numCustomLists]);
         m_numCustomLists++;
       }
     }
