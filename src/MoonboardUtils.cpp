@@ -192,23 +192,23 @@ SortOrder *MoonboardUtils::getSortOrderByName(const char *sortOrderName) {
 }
 
 // Opens the specified list using the specified sort order (NULL for sortOrder means order will be as it is read from the file)
-uint8_t MoonboardUtils::openFilteredList(const char *listName, const char *sortOrder) {
+bool MoonboardUtils::openFilteredList(const char *listName, const char *sortOrder) {
   closeList();
   if (sortOrder != NULL) {
     sprintf(m_buf, "/%s_%s.lst", listName, sortOrder);
     m_list = SPIFFS.open(m_buf);
-    if (!m_list) return 0;
+    if (!m_list) return false;
   }
   sprintf(m_buf, "/%s.dat", listName);
   m_data = SPIFFS.open(m_buf);
-  if (!m_data) { m_list.close(); return 0; }
+  if (!m_data) { m_list.close(); return false; }
   m_listType = FILTERED;
-  return 1;
+  return true;
 }
 
 // Opens the list corresponding to the selections made (or not) using the specified sort order
 // (NULL for sortOrder means order will be as it is read from the file)
-uint8_t MoonboardUtils::openSelectedFilteredList(const char *sortOrder) {
+bool MoonboardUtils::openSelectedFilteredList(const char *sortOrder) {
   return openFilteredList(m_selectedFiltListName, sortOrder);
 }
 
@@ -346,7 +346,7 @@ bool MoonboardUtils::parseProblem(Problem *prob, char *in)
 }
 
 void MoonboardUtils::printProblem(Problem *p, Print *out) {
-  strcpy(m_buf, "%XXs %s V%d %-5d");
+  strcpy(m_buf, "%XXs %s V%d %5d");
   char t_num[3];
   snprintf(t_num, 3, "%d", MAX_PROBLEMNAME_LEN);
   strncpy(&(m_buf[1]), t_num, 2);
@@ -375,7 +375,8 @@ void MoonboardUtils::showCatType(Print *outStr, CategoryType *ptrCT) {
 
 void MoonboardUtils::showAllCatTypes(Print *outStr) {
   CategoryType *ptrCT;
-  for (_t_uint8_t = 0; (ptrCT = getCatType(_t_uint8_t)); _t_uint8_t++) {
+  _t_uint8_t = 0;
+  while (ptrCT = getCatType(_t_uint8_t++)) {
     showCatType(outStr, ptrCT);
   }
 }
@@ -395,7 +396,7 @@ void MoonboardUtils::showStatus(Print *outStr) {
       SortOrder *ptrSO;
       _t_uint8_t = 0;
       bool t_started = false;
-      while ((ptrSO = getSortOrder(_t_uint8_t++))) {
+      while (ptrSO = getSortOrder(_t_uint8_t++)) {
         if (ptrSO->exists) {
           outStr->printf((t_started ? ", %s" : "%s"), ptrSO->displayName);
           t_started = true;

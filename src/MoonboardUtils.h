@@ -39,7 +39,6 @@ public:
   ListType getOpenListType() { return m_listType; }
 
   uint8_t findCustomLists();
-  bool openCustomList(uint8_t z_listNum);
   const char *customListNumToName(uint8_t z_listNum);
 
   void selectCat_ss(const char *catTypeName, const char *catName);
@@ -50,15 +49,17 @@ public:
   void unselectCat_i(int8_t z_catType);
 
   char *getSelectedCatName(int8_t z_catType);
+
   const char *getSelectedFilteredListName();
   bool selectedFilteredListExists() { return m_selectedFiltListExists; }
+
+  bool openSelectedFilteredList(const char *sortOrder);
+  bool openCustomList(uint8_t z_listNum);
+  void closeList();
 
   int8_t catTypeToNum(const char *catTypeName);
   char *catNumToName(int8_t z_catType, int8_t z_catNum);
   int8_t catNameToNum(int8_t z_catType, const char *catName);
-
-  uint8_t openSelectedFilteredList(const char *sortOrder);
-  void closeList();
 
   bool readNextProblem(Problem *p);
   uint8_t readNextProblems(Problem pArr[], uint8_t num);
@@ -73,7 +74,7 @@ private:
   void beginCatType(char *catTypeName);
   void endCatType();
   void addCat(const char *catName);
-  uint8_t openFilteredList(const char *listName, const char *sortOrder);
+  bool openFilteredList(const char *listName, const char *sortOrder);
   void updateStatus();
 
   const char m_wildcardStr[4] = MB_WILDCARD_STRING;
