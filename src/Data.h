@@ -41,4 +41,6 @@ struct SortOrder {
   bool exists; // Does it exist for the current selection?
 };
 
+int8_t problemAsString(Problem *p, char *buf, size_t bufLen);
+
 #endif // #ifndef _MOONBOARD_DATA_H
