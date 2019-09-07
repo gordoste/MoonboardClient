@@ -5,8 +5,8 @@ char MoonboardStreamMenu::problemChoice(Problem probs[], uint8_t numProblems,
   while (1) {
     if (numProblems > 0) {
       for (_t_ui8 = 1; _t_ui8 <= numProblems; _t_ui8++) {
-        m_stdout->printf("%d) ", _t_ui8);
         problemAsString(&(probs[_t_ui8-1]), problemStr, sizeof(problemStr));
+        m_stdout->printf("%d) %s\n", _t_ui8, problemStr);
       }
     }
     else {
