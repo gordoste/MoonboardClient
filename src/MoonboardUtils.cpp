@@ -227,6 +227,7 @@ bool MoonboardUtils::readNextProblem(Problem *prob) {
     _t_ptr_char = StringUtils::strtoke(m_buf, t_strtok);
     if (_t_ptr_char == NULL) { return false; }
     _t_ptr_char = StringUtils::strtoke(NULL, t_strtok);
+    if (_t_ptr_char == NULL) { return false; }
     m_data.seek(atoi(_t_ptr_char), SeekSet);
   }
   m_data.readStringUntil('\n').toCharArray(m_buf, m_bufLen);
