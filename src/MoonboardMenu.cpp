@@ -1,12 +1,13 @@
 #include "MoonboardMenu.h"
 
 char MoonboardStreamMenu::problemChoice(Problem probs[], uint8_t numProblems,
-  const char *otherChoiceStrings[], const char *otherChoices) {
+  const char *otherChoiceStrings[], const char *otherChoices, char selected) {
   while (1) {
     if (numProblems > 0) {
       for (_t_ui8 = 1; _t_ui8 <= numProblems; _t_ui8++) {
         problemAsString(&(probs[_t_ui8-1]), problemStr, sizeof(problemStr));
-        m_stdout->printf("%d) %s\n", _t_ui8, problemStr);
+        m_stdout->printf("%d) %s%s\n", _t_ui8, problemStr,
+          selected == _t_ui8 ? " << SELECTED" : "");
       }
     }
     else {
@@ -14,7 +15,8 @@ char MoonboardStreamMenu::problemChoice(Problem probs[], uint8_t numProblems,
     }
     uint8_t numChoices = strlen(otherChoices);
     for (uint8_t i = 0; i < numChoices; i++) {
-      m_stdout->printf("%c) %s\n", otherChoices[i], otherChoiceStrings[i]);
+      m_stdout->printf("%c) %s%s\n", otherChoices[i], otherChoiceStrings[i],
+        selected == otherChoices[i] ? " << SELECTED" : "");
     }
     m_stdout->printf("> ");
     char c = m_stdin->timedRead();
@@ -34,13 +36,13 @@ char MoonboardStreamMenu::problemChoice(Problem probs[], uint8_t numProblems,
 #ifdef TFT_ENABLED
 
 char MoonboardTFTMenu::problemChoice(Problem probs[], uint8_t numProblems,
-  const char *otherChoiceStrings[], const char *otherChoices) {
-  char options[MAX_CHOICES] = "123456789";
+  const char *otherChoiceStrings[], const char *otherChoices, char selected) {
+  char options[MAX_CHOICES] = "012345678";
   strcpy(&options[numProblems], otherChoices);
-  uint8_t numChoices = strlen(otherChoices);
+  uint8_t numOtherChoices = strlen(otherChoices);
   for (int i = 0; i < numProblems; i++) m_allChoices[i] = probs[i].name;
-  for (int i = 0; i < numChoices; i++) m_allChoices[numProblems+i] = otherChoiceStrings[i];
-  return multiChoice(m_allChoices, options);
+  for (int i = 0; i < numOtherChoices; i++) m_allChoices[numProblems+i] = otherChoiceStrings[i];
+  return multiChoice(m_allChoices, options, selected);
 }
 
 #endif //#ifdef TFT_ENABLED
