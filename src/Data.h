@@ -25,8 +25,8 @@ struct Problem
 class CategoryType {
   public:
     char name[MAX_CATTYPENAME_LEN+1];
-    uint8_t catCount; // How many categories
-    int8_t selectedCat; // Which category is selected. 0-based. -1 = NONE
+    uint8_t catCount = 0; // How many categories
+    int8_t selectedCat = -1; // Which category is selected. 0-based. -1 = NONE
     char *catNames[MAX_CATS_PER_CATTYPE];
     void addCat(char *catName) {
       if (catCount == MAX_CATS_PER_CATTYPE) { Serial.println("CT::aC - too many"); return; }
