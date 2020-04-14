@@ -203,6 +203,8 @@ bool MoonboardUtils::openFilteredList(const char *listName, const char *sortOrde
   m_data = SPIFFS.open(m_buf);
   if (!m_data) { m_list.close(); return false; }
   m_listType = FILTERED;
+  m_listEnd = false;
+  fetchNextProblem();
   return true;
 }
 
@@ -219,7 +221,15 @@ void MoonboardUtils::closeList() {
 }
 
 // Read next problem from the currently open list
+// The problem will be pre-fetched into buffer each time
 bool MoonboardUtils::readNextProblem(Problem *prob) {
+  if (m_listEnd) return false; // We reached the end when trying to pre-fetch last time
+  if (!parseProblem(prob, m_buf)) return false;
+  m_listEnd = !fetchNextProblem();
+  return true;
+}
+
+bool MoonboardUtils::fetchNextProblem() {
   if (!m_data) { return false; } // Check list is open
   if (m_list) {
     strcpy(t_strtok, ":");
@@ -232,7 +242,7 @@ bool MoonboardUtils::readNextProblem(Problem *prob) {
   }
   m_data.readStringUntil('\n').toCharArray(m_buf, m_bufLen);
   if (strlen(m_buf) == 0) { return false; }
-  return parseProblem(prob, m_buf);
+  return true;
 }
 
 // Read problems (up to max. # specified) from the open list into given array. Returns # problems read.
@@ -442,9 +452,13 @@ bool MoonboardUtils::openCustomList(uint8_t z_listNum) {
   if (!m_data) return false;
   m_selectedCustomList = z_listNum;
   m_listType = CUSTOM;
+  m_listEnd = false;
+  fetchNextProblem();
   return true;
 }
 
 const char *MoonboardUtils::customListNumToName(uint8_t z_listNum) {
   return z_listNum < m_numCustomLists ? m_customListNames[z_listNum] : NULL;
 }
+
+ bool MoonboardUtils::listHasNext() { return !m_listEnd; }

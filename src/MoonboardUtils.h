@@ -55,6 +55,7 @@ public:
 
   bool openSelectedFilteredList(const char *sortOrder);
   bool openCustomList(uint8_t z_listNum);
+  bool listHasNext();
   void closeList();
 
   int8_t catTypeToNum(const char *catTypeName);
@@ -75,6 +76,7 @@ private:
   void endCatType();
   void addCat(const char *catName);
   bool openFilteredList(const char *listName, const char *sortOrder);
+  bool fetchNextProblem();
   void updateStatus();
 
   const char m_wildcardStr[4] = MB_WILDCARD_STRING;
@@ -98,6 +100,7 @@ private:
 
   File m_list, m_data;
   char *m_buf;
+  bool m_listEnd = false;
   uint16_t m_bufLen;
   char *t_catBufPtr = m_catBuf; // While setting up, point to where unused storage starts 
 
