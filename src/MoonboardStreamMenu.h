@@ -1,8 +1,8 @@
-#ifndef _MOONBOARD_MENU_H
-#define _MOONBOARD_MENU_H
+#ifndef _MOONBOARD_STREAM_MENU_H
+#define _MOONBOARD_STREAM_MENU_H
 
 #include "Data.h"
-#include "Menu.h"
+#include "StreamMenu.h"
 
 class MoonboardStreamMenu : public StreamMenu {
   public:
@@ -14,4 +14,4 @@ class MoonboardStreamMenu : public StreamMenu {
     char problemStr[80];
 };
 
-#endif //#ifndef _MOONBOARD_MENU_H
+#endif //#ifndef _MOONBOARD_STREAM_MENU_H
