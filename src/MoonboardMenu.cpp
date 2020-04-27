@@ -32,17 +32,3 @@ char MoonboardStreamMenu::problemChoice(Problem probs[], uint8_t numProblems,
   }
   return -1;
 }
-
-#ifdef TFT_ENABLED
-
-char MoonboardTFTMenu::problemChoice(Problem probs[], uint8_t numProblems,
-  const char *otherChoiceStrings[], const char *otherChoices, char selected) {
-  char options[MAX_CHOICES] = "012345678";
-  strcpy(&options[numProblems], otherChoices);
-  uint8_t numOtherChoices = strlen(otherChoices);
-  for (int i = 0; i < numProblems; i++) m_allChoices[i] = probs[i].name;
-  for (int i = 0; i < numOtherChoices; i++) m_allChoices[numProblems+i] = otherChoiceStrings[i];
-  return multiChoice(m_allChoices, options, selected);
-}
-
-#endif //#ifdef TFT_ENABLED
