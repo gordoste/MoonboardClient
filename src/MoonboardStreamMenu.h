@@ -5,11 +5,12 @@
 #include "StreamMenu.h"
 
 class MoonboardStreamMenu : public StreamMenu {
-  public:
+public:
     char problemChoice(Problem probs[], uint8_t numProblems,
-      const char *otherChoiceStrings[], const char *otherChoices,
-      char selected = '\0');
-  protected:
+                       const char *otherChoiceStrings[], const char *otherChoices,
+                       char selected = '\0');
+
+protected:
     uint8_t _t_ui8;
     char problemStr[80];
 };
