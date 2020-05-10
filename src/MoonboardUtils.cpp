@@ -519,4 +519,9 @@ const char *MoonboardUtils::customListNumToName(uint8_t z_listNum) {
     return z_listNum < m_numCustomLists ? m_customListNames[z_listNum] : NULL;
 }
 
+const char *MoonboardUtils::getSelectedCustomListName() {
+    if (m_listType != CUSTOM) return NULL;
+    return customListNumToName(m_selectedCustomList);
+}
+
 bool MoonboardUtils::listHasNext() { return !m_listEnd; }

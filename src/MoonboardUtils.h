@@ -54,6 +54,7 @@ public:
 
     bool openSelectedFilteredList(const char *sortOrder);
     bool openCustomList(uint8_t z_listNum);
+    const char *getSelectedCustomListName();
     bool listHasNext();
     void closeList();
 
