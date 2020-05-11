@@ -3,7 +3,7 @@
 
 #include "Data.h"
 #include "StringUtils.h"
-#include <SPIFFS.h>
+#include <FS.h>
 
 #define MAX_LISTNAME_SIZE 15
 #define MAX_SORT_ORDERS 4
@@ -23,7 +23,7 @@ enum ListType {
 
 class MoonboardUtils {
 public:
-    void begin(char *buf, uint16_t bufLen, Print *stdErr);
+    void begin(char *buf, uint16_t bufLen, FS *FS, Print *stdErr);
     void addCatType(const char *catType);
     void addSortOrder(const char *sortOrderStr);
 
@@ -111,6 +111,7 @@ private:
     char t_strtok[2]; // Token storage for strtok'ing
 
     Print *m_stdErr;
+    FS *m_fs;
 };
 
 #endif // #ifndef _MOONBOARD_UTILS_H

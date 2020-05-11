@@ -1,10 +1,11 @@
 #include "MoonboardUtils.h"
 
 // Pass a buffer for working
-void MoonboardUtils::begin(char *buf, uint16_t bufLen, Print *stdErr) {
+void MoonboardUtils::begin(char *buf, uint16_t bufLen, FS *fs, Print *stdErr) {
     m_buf = buf;
     m_bufLen = bufLen;
     m_stdErr = stdErr;
+    m_fs = fs;
     findCustomLists();
 }
 
@@ -212,12 +213,12 @@ void MoonboardUtils::updateStatus() {
     strcpy(&(m_buf[1]), m_selectedFiltListName);
     _t_ptr_char = &(m_buf[strlen(m_buf)]); // points to the null terminator after /filename
     strcpy(_t_ptr_char, ".dat");           // Check if the problem data file (/filename.dat) exists
-    m_selectedFiltListExists = SPIFFS.exists(m_buf);
+    m_selectedFiltListExists = m_fs->exists(m_buf);
     // iterate sort orders
     for (_t_uint8_t = 0; _t_uint8_t < m_numSortOrders; _t_uint8_t++) {
         // check whether an index file (/filename_sortname.lst) exists for each
         sprintf(_t_ptr_char, "_%s.lst", m_sortOrders[_t_uint8_t].name);
-        m_sortOrders[_t_uint8_t].exists = SPIFFS.exists(m_buf);
+        m_sortOrders[_t_uint8_t].exists = m_fs->exists(m_buf);
     }
 }
 
@@ -236,11 +237,11 @@ bool MoonboardUtils::openFilteredList(const char *listName, const char *sortOrde
     closeList();
     if (sortOrder != NULL) {
         sprintf(m_buf, "/%s_%s.lst", listName, sortOrder);
-        m_list = SPIFFS.open(m_buf);
+        m_list = m_fs->open(m_buf);
         if (!m_list) return false;
     }
     sprintf(m_buf, "/%s.dat", listName);
-    m_data = SPIFFS.open(m_buf);
+    m_data = m_fs->open(m_buf);
     if (!m_data) {
         m_list.close();
         return false;
@@ -482,7 +483,7 @@ uint8_t MoonboardUtils::getNumCustomLists() { return m_numCustomLists; }
 
 uint8_t MoonboardUtils::findCustomLists() {
     m_numCustomLists = 0;
-    File root = SPIFFS.open("/");
+    File root = m_fs->open("/");
     if (!root) {
         m_stdErr->println(F("Can't open FS. Is it initialised?"));
         return 0;
@@ -506,7 +507,7 @@ bool MoonboardUtils::openCustomList(uint8_t z_listNum) {
     closeList();
     if (z_listNum >= m_numCustomLists) return false;
     sprintf(m_buf, "/l/%s.dat", m_customListNames[z_listNum]);
-    m_data = SPIFFS.open(m_buf);
+    m_data = m_fs->open(m_buf);
     if (!m_data) return false;
     m_selectedCustomList = z_listNum;
     m_listType = CUSTOM;
