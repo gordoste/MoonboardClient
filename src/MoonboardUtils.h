@@ -15,6 +15,11 @@
 #define MB_WILDCARD_STRING "Any"
 #endif
 
+// Directory where problem lists are stored
+#ifndef MB_PROBLIST_DIR
+#define MB_PROBLIST_DIR "l"
+#endif
+
 enum ListType {
     NONE = 0,
     FILTERED = 1,

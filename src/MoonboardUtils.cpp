@@ -490,12 +490,29 @@ uint8_t MoonboardUtils::findCustomLists() {
     }
     File f;
     while ((f = root.openNextFile()) && (m_numCustomLists < MAX_CUSTOM_LISTS)) {
-        if (strncmp("/l/", f.name(), 3) == 0) {
-            _t_uint8_t = strlen(f.name());
-            if (strncmp(&(f.name()[_t_uint8_t - 4]), ".dat", 4) == 0) {
-                strncpy(m_customListNames[m_numCustomLists], &(f.name()[3]), _t_uint8_t - 7);
-                m_customListNames[m_numCustomLists][_t_uint8_t - 4] = '\0';
-                m_numCustomLists++;
+        const char *fnam = f.name();
+        uint8_t listDirSz = strlen(MB_PROBLIST_DIR);
+        if (fnam[0] == '/' && strncmp(MB_PROBLIST_DIR, &fnam[1], listDirSz) == 0) {
+            // This is the directory as a file
+            if (f.isDirectory()) {
+                for (File lFile = f.openNextFile(); lFile; lFile = f.openNextFile()) {
+                    fnam = lFile.name();
+                    _t_uint8_t = strlen(fnam);
+                    if (strncmp(&(fnam[_t_uint8_t - 4]), ".dat", 4) == 0) {
+                    strncpy(m_customListNames[m_numCustomLists], &(fnam[listDirSz+2]), _t_uint8_t - 4 - listDirSz - 2);
+                        m_customListNames[m_numCustomLists][_t_uint8_t] = '\0';
+                        m_numCustomLists++;
+                    }
+                }
+            }
+            // SPIFFS has no directories, it treats dirname as part of filename. Look for files with /PROBDIR/ at the start
+            if (fnam[_t_uint8_t + 1] == '/') {
+                _t_uint8_t = strlen(fnam);
+                if (strncmp(&(fnam[_t_uint8_t - 4]), ".dat", 4) == 0) {
+                    strncpy(m_customListNames[m_numCustomLists], &(fnam[listDirSz+2]), _t_uint8_t - 4 - listDirSz - 2);
+                    m_customListNames[m_numCustomLists][_t_uint8_t - 4] = '\0';
+                    m_numCustomLists++;
+                }
             }
         }
     }
@@ -506,7 +523,7 @@ uint8_t MoonboardUtils::findCustomLists() {
 bool MoonboardUtils::openCustomList(uint8_t z_listNum) {
     closeList();
     if (z_listNum >= m_numCustomLists) return false;
-    sprintf(m_buf, "/l/%s.dat", m_customListNames[z_listNum]);
+    sprintf(m_buf, "/%s/%s.dat", MB_PROBLIST_DIR, m_customListNames[z_listNum]);
     m_data = m_fs->open(m_buf);
     if (!m_data) return false;
     m_selectedCustomList = z_listNum;
