@@ -34,7 +34,7 @@ void MoonboardUtils::addSortOrder(const char *sortOrderStr) {
     m_numSortOrders++;
 }
 
-void MoonboardUtils::beginCatType(char *catTypeName) {
+void MoonboardUtils::beginCatType(char *catTypeName, bool wildcardOpt) {
     if (strlen(catTypeName) > MAX_CATTYPENAME_LEN) {
         m_stdErr->printf("MBU::bCT - '%s' too long\n", catTypeName);
         return;
@@ -44,6 +44,7 @@ void MoonboardUtils::beginCatType(char *catTypeName) {
     m_catTypes[m_numCatTypes].name[sizeof(CategoryType::name) - 1] = '\0';
     m_catTypes[m_numCatTypes].catCount = 0;
     m_catTypes[m_numCatTypes].selectedCat = -1;
+    m_catTypes[m_numCatTypes].wildcardOpt = wildcardOpt;
 }
 
 void MoonboardUtils::endCatType() {
@@ -62,11 +63,11 @@ void MoonboardUtils::addCat(const char *catName) {
 }
 
 // Pass colon-delimited string. First token is cat type name, others are taken as category names
-void MoonboardUtils::addCatType(const char *catType) {
+void MoonboardUtils::addCatType(const char *catType, bool wildcardOpt) {
     strcpy(m_buf, catType);
     strcpy(t_strtok, ":");
     _t_ptr_char = StringUtils::strtoke(m_buf, t_strtok);
-    beginCatType(_t_ptr_char);
+    beginCatType(_t_ptr_char, wildcardOpt);
     while ((_t_ptr_char = StringUtils::strtoke(NULL, t_strtok))) {
         addCat(_t_ptr_char);
     }
