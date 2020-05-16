@@ -10,6 +10,8 @@
 #define MAX_PROBLEMNAME_LEN 42
 #define MAX_HOLDS_PER_PANEL 10
 
+const char catWildcardStr[2] = "*";
+
 struct Problem {
     char name[MAX_PROBLEMNAME_LEN + 1];
     uint8_t grade;
