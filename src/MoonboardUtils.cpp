@@ -240,14 +240,20 @@ bool MoonboardUtils::openFilteredList(const char *listName, const char *sortOrde
     if (sortOrder != NULL) {
         sprintf(m_buf, "/%s_%s.lst", listName, sortOrder);
         m_list = m_fs->open(m_buf);
-        if (!m_list) return false;
+        if (!m_list) {
+            m_stdErr->printf("'%s' can't open\n", m_buf);
+            return false;
+        }
+        m_stdErr->printf("'%s' opened ok\n", m_buf);
     }
     sprintf(m_buf, "/%s.dat", listName);
     m_data = m_fs->open(m_buf);
     if (!m_data) {
         m_list.close();
+        m_stdErr->printf("'%s' can't open\n", m_buf);
         return false;
     }
+    m_stdErr->printf("'%s' opened ok\n", m_buf);
     m_listType = FILTERED;
     m_listEnd = false;
     fetchNextProblem();
