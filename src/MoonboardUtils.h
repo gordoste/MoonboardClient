@@ -77,13 +77,13 @@ public:
     void showAllCatTypes(Print *outStr);
     void showStatus(Print *outStr);
 
+    void updateStatus();
 private:
     void beginCatType(char *catTypeName, bool wildcardOpt = true);
     CategoryType *endCatType();
     void addCat(const char *catName);
     bool openFilteredList(const char *listName, const char *sortOrder);
     bool fetchNextProblem();
-    void updateStatus();
 
     const char m_wildcardStr[4] = MB_WILDCARD_STRING;
 
