@@ -29,6 +29,7 @@ enum ListType {
 class MoonboardUtils {
 public:
     void begin(char *buf, uint16_t bufLen, FS *FS, Print *stdErr);
+    void setStdErr(Print *stdErr);
     CategoryType *addCatType(const char *catType, bool wildcardOpt = true);
     void addSortOrder(const char *sortOrderStr);
 

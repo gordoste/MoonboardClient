@@ -9,6 +9,10 @@ void MoonboardUtils::begin(char *buf, uint16_t bufLen, FS *fs, Print *stdErr) {
     findCustomLists();
 }
 
+void MoonboardUtils::setStdErr(Print *stdErr) {
+    m_stdErr = stdErr;
+}
+
 // Add a sort order. Format aaa:bbb where aaa is the string used in .lst filenames, bbb is the display name
 void MoonboardUtils::addSortOrder(const char *sortOrderStr) {
     if (m_numSortOrders == MAX_SORT_ORDERS) {
@@ -49,7 +53,7 @@ void MoonboardUtils::beginCatType(char *catTypeName, bool wildcardOpt) {
 
 CategoryType *MoonboardUtils::endCatType() {
     m_numCatTypes++;
-    return &(m_catTypes[m_numCatTypes-1]);
+    return &(m_catTypes[m_numCatTypes - 1]);
 }
 
 void MoonboardUtils::addCat(const char *catName) {
@@ -497,8 +501,10 @@ uint8_t MoonboardUtils::findCustomLists() {
         return 0;
     }
     File f;
+    m_stdErr->println("Looking for custom lists");
     while ((f = root.openNextFile()) && (m_numCustomLists < MAX_CUSTOM_LISTS)) {
         const char *fnam = f.name();
+        m_stdErr->print('.');
         uint8_t listDirSz = strlen(MB_PROBLIST_DIR);
         if (fnam[0] == '/' && strncmp(MB_PROBLIST_DIR, &fnam[1], listDirSz) == 0) {
             // This is the directory as a file
@@ -507,8 +513,9 @@ uint8_t MoonboardUtils::findCustomLists() {
                     fnam = lFile.name();
                     _t_uint8_t = strlen(fnam);
                     if (strncmp(&(fnam[_t_uint8_t - 4]), ".dat", 4) == 0) {
-                    strncpy(m_customListNames[m_numCustomLists], &(fnam[listDirSz+2]), _t_uint8_t - 4 - listDirSz - 2);
+                        strncpy(m_customListNames[m_numCustomLists], &(fnam[listDirSz + 2]), _t_uint8_t - 4 - listDirSz - 2);
                         m_customListNames[m_numCustomLists][_t_uint8_t] = '\0';
+                        m_stdErr->printf("Found custom list %s\n", m_customListNames[m_numCustomLists]);
                         m_numCustomLists++;
                     }
                 }
@@ -517,14 +524,16 @@ uint8_t MoonboardUtils::findCustomLists() {
             if (fnam[_t_uint8_t + 1] == '/') {
                 _t_uint8_t = strlen(fnam);
                 if (strncmp(&(fnam[_t_uint8_t - 4]), ".dat", 4) == 0) {
-                    strncpy(m_customListNames[m_numCustomLists], &(fnam[listDirSz+2]), _t_uint8_t - 4 - listDirSz - 2);
+                    strncpy(m_customListNames[m_numCustomLists], &(fnam[listDirSz + 2]), _t_uint8_t - 4 - listDirSz - 2);
                     m_customListNames[m_numCustomLists][_t_uint8_t - 4] = '\0';
+                    m_stdErr->printf("Found custom list %s\n", m_customListNames[m_numCustomLists]);
                     m_numCustomLists++;
                 }
             }
         }
     }
     root.close();
+    m_stdErr->printf("Found %i custom lists\n", m_numCustomLists);
     return m_numCustomLists;
 }
 
