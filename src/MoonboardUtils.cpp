@@ -47,8 +47,9 @@ void MoonboardUtils::beginCatType(char *catTypeName, bool wildcardOpt) {
     m_catTypes[m_numCatTypes].wildcardOpt = wildcardOpt;
 }
 
-void MoonboardUtils::endCatType() {
+CategoryType *MoonboardUtils::endCatType() {
     m_numCatTypes++;
+    return &(m_catTypes[m_numCatTypes-1]);
 }
 
 void MoonboardUtils::addCat(const char *catName) {
@@ -63,7 +64,7 @@ void MoonboardUtils::addCat(const char *catName) {
 }
 
 // Pass colon-delimited string. First token is cat type name, others are taken as category names
-void MoonboardUtils::addCatType(const char *catType, bool wildcardOpt) {
+CategoryType *MoonboardUtils::addCatType(const char *catType, bool wildcardOpt) {
     strcpy(m_buf, catType);
     strcpy(t_strtok, ":");
     _t_ptr_char = StringUtils::strtoke(m_buf, t_strtok);
@@ -71,7 +72,7 @@ void MoonboardUtils::addCatType(const char *catType, bool wildcardOpt) {
     while ((_t_ptr_char = StringUtils::strtoke(NULL, t_strtok))) {
         addCat(_t_ptr_char);
     }
-    endCatType();
+    return endCatType();
 }
 
 // Get category type by number. Return NULL if it doesn't exist. Good for iterating.

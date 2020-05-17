@@ -29,7 +29,7 @@ enum ListType {
 class MoonboardUtils {
 public:
     void begin(char *buf, uint16_t bufLen, FS *FS, Print *stdErr);
-    void addCatType(const char *catType, bool wildcardOpt = true);
+    CategoryType *addCatType(const char *catType, bool wildcardOpt = true);
     void addSortOrder(const char *sortOrderStr);
 
     CategoryType *getCatType(int8_t z_catType);
@@ -79,7 +79,7 @@ public:
 
 private:
     void beginCatType(char *catTypeName, bool wildcardOpt = true);
-    void endCatType();
+    CategoryType *endCatType();
     void addCat(const char *catName);
     bool openFilteredList(const char *listName, const char *sortOrder);
     bool fetchNextProblem();
