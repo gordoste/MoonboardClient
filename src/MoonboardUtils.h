@@ -31,7 +31,7 @@ public:
     void begin(char *buf, uint16_t bufLen, FS *FS, Print *stdErr);
     void setStdErr(Print *stdErr);
     CategoryType *addCatType(const char *catType, bool wildcardOpt = true);
-    void addSortOrder(const char *sortOrderStr);
+    SortOrder *addSortOrder(const char *sortOrderStr);
 
     CategoryType *getCatType(int8_t z_catType);
     SortOrder *getSortOrder(int8_t z_sortOrder);

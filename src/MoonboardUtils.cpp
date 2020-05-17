@@ -14,10 +14,10 @@ void MoonboardUtils::setStdErr(Print *stdErr) {
 }
 
 // Add a sort order. Format aaa:bbb where aaa is the string used in .lst filenames, bbb is the display name
-void MoonboardUtils::addSortOrder(const char *sortOrderStr) {
+SortOrder *MoonboardUtils::addSortOrder(const char *sortOrderStr) {
     if (m_numSortOrders == MAX_SORT_ORDERS) {
         m_stdErr->println(F("MBU::sSO - Hit max #"));
-        return;
+        return NULL;
     }
     strcpy(m_buf, sortOrderStr);
     strcpy(t_strtok, ":");
@@ -25,17 +25,18 @@ void MoonboardUtils::addSortOrder(const char *sortOrderStr) {
     _t_uint8_t = strlen(_t_ptr_char); // +1 for null terminator
     if (_t_uint8_t > MAX_SORTORDER_NAME_LEN) {
         m_stdErr->printf("MBU:sSO - '%s' too long\n", _t_ptr_char);
-        return;
+        return NULL;
     }
     strcpy(m_sortOrders[m_numSortOrders].name, _t_ptr_char);
     _t_ptr_char = StringUtils::strtoke(NULL, t_strtok);
     _t_uint8_t = strlen(_t_ptr_char); // +1 for null terminator
     if (_t_uint8_t > MAX_SORTORDER_DSPNAME_LEN) {
         m_stdErr->printf("MBU:sSO - dN '%s' too long\n", _t_ptr_char);
-        return;
+        return NULL;
     }
     strcpy(m_sortOrders[m_numSortOrders].displayName, _t_ptr_char);
     m_numSortOrders++;
+    return &(m_sortOrders[m_numSortOrders-1]);
 }
 
 void MoonboardUtils::beginCatType(char *catTypeName, bool wildcardOpt) {
@@ -518,6 +519,7 @@ uint8_t MoonboardUtils::findCustomLists() {
                         m_stdErr->printf("Found custom list %s\n", m_customListNames[m_numCustomLists]);
                         m_numCustomLists++;
                     }
+                    lFile.close();
                 }
             }
             // SPIFFS has no directories, it treats dirname as part of filename. Look for files with /PROBDIR/ at the start
@@ -531,6 +533,7 @@ uint8_t MoonboardUtils::findCustomLists() {
                 }
             }
         }
+        f.close();
     }
     root.close();
     m_stdErr->printf("Found %i custom lists\n", m_numCustomLists);
