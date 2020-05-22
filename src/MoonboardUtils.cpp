@@ -36,7 +36,7 @@ SortOrder *MoonboardUtils::addSortOrder(const char *sortOrderStr) {
     }
     strcpy(m_sortOrders[m_numSortOrders].displayName, _t_ptr_char);
     m_numSortOrders++;
-    return &(m_sortOrders[m_numSortOrders-1]);
+    return &(m_sortOrders[m_numSortOrders - 1]);
 }
 
 void MoonboardUtils::beginCatType(char *catTypeName, bool wildcardOpt) {
@@ -496,6 +496,21 @@ uint8_t MoonboardUtils::getNumCustomLists() { return m_numCustomLists; }
 
 uint8_t MoonboardUtils::findCustomLists() {
     m_numCustomLists = 0;
+    const char *fnam;
+    uint8_t listDirSz = strlen(MB_PROBLIST_DIR);
+    if (File listDir = m_fs->open(MB_PROBLIST_DIR)) {
+        // If we can open the list directory, must be using SD card
+        if (listDir.isDirectory()) {
+            for (File lFile = listDir.openNextFile(); lFile; lFile = listDir.openNextFile()) {
+                fnam = lFile.name();
+                checkFileIsCustomList(fnam);
+                lFile.close();
+            }
+            m_stdErr->printf("Found %i custom lists\n", m_numCustomLists);
+            return m_numCustomLists;
+        }
+    }
+    // Otherwise fall back to searching the whole filesystem
     File root = m_fs->open("/");
     if (!root) {
         m_stdErr->println(F("Can't open FS. Is it initialised?"));
@@ -504,33 +519,12 @@ uint8_t MoonboardUtils::findCustomLists() {
     File f;
     m_stdErr->println("Looking for custom lists");
     while ((f = root.openNextFile()) && (m_numCustomLists < MAX_CUSTOM_LISTS)) {
-        const char *fnam = f.name();
+        fnam = f.name();
         m_stdErr->print('.');
-        uint8_t listDirSz = strlen(MB_PROBLIST_DIR);
-        if (fnam[0] == '/' && strncmp(MB_PROBLIST_DIR, &fnam[1], listDirSz) == 0) {
-            // This is the directory as a file
-            if (f.isDirectory()) {
-                for (File lFile = f.openNextFile(); lFile; lFile = f.openNextFile()) {
-                    fnam = lFile.name();
-                    _t_uint8_t = strlen(fnam);
-                    if (strncmp(&(fnam[_t_uint8_t - 4]), ".dat", 4) == 0) {
-                        strncpy(m_customListNames[m_numCustomLists], &(fnam[listDirSz + 2]), _t_uint8_t - 4 - listDirSz - 2);
-                        m_customListNames[m_numCustomLists][_t_uint8_t] = '\0';
-                        m_stdErr->printf("Found custom list %s\n", m_customListNames[m_numCustomLists]);
-                        m_numCustomLists++;
-                    }
-                    lFile.close();
-                }
-            }
+        if (strncmp(MB_PROBLIST_DIR, fnam, listDirSz) == 0) {
             // SPIFFS has no directories, it treats dirname as part of filename. Look for files with /PROBDIR/ at the start
             if (fnam[_t_uint8_t + 1] == '/') {
-                _t_uint8_t = strlen(fnam);
-                if (strncmp(&(fnam[_t_uint8_t - 4]), ".dat", 4) == 0) {
-                    strncpy(m_customListNames[m_numCustomLists], &(fnam[listDirSz + 2]), _t_uint8_t - 4 - listDirSz - 2);
-                    m_customListNames[m_numCustomLists][_t_uint8_t - 4] = '\0';
-                    m_stdErr->printf("Found custom list %s\n", m_customListNames[m_numCustomLists]);
-                    m_numCustomLists++;
-                }
+                checkFileIsCustomList(fnam);
             }
         }
         f.close();
@@ -538,6 +532,16 @@ uint8_t MoonboardUtils::findCustomLists() {
     root.close();
     m_stdErr->printf("Found %i custom lists\n", m_numCustomLists);
     return m_numCustomLists;
+}
+
+void MoonboardUtils::checkFileIsCustomList(const char *fileName) {
+    _t_uint8_t = strlen(fileName);
+    if (strncmp(&(fileName[_t_uint8_t - 4]), ".dat", 4) == 0) {
+        strncpy(m_customListNames[m_numCustomLists], &(fileName[m_listDirSz]), _t_uint8_t - 4 - m_listDirSz);
+        m_customListNames[m_numCustomLists][_t_uint8_t] = '\0';
+        m_stdErr->printf("Found custom list %s\n", m_customListNames[m_numCustomLists]);
+        m_numCustomLists++;
+    }
 }
 
 bool MoonboardUtils::openCustomList(uint8_t z_listNum) {

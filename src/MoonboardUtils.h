@@ -17,7 +17,7 @@
 
 // Directory where problem lists are stored
 #ifndef MB_PROBLIST_DIR
-#define MB_PROBLIST_DIR "l"
+#define MB_PROBLIST_DIR "/l"
 #endif
 
 enum ListType {
@@ -84,6 +84,7 @@ private:
     CategoryType *endCatType();
     void addCat(const char *catName);
     bool openFilteredList(const char *listName, const char *sortOrder);
+    void checkFileIsCustomList(const char *fileName);
     bool fetchNextProblem();
 
     const char m_wildcardStr[4] = MB_WILDCARD_STRING;
@@ -110,6 +111,7 @@ private:
     bool m_listEnd = false;
     uint16_t m_bufLen;
     char *t_catBufPtr = m_catBuf; // While setting up, point to where unused storage starts
+    uint8_t m_listDirSz = sizeof(MB_PROBLIST_DIR);
 
     uint8_t _t_uint8_t = 0;
     int8_t _t_int8_t = 0;
