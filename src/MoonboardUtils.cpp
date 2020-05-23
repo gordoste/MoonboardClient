@@ -6,6 +6,7 @@ void MoonboardUtils::begin(char *buf, uint16_t bufLen, FS *fs, Print *stdErr) {
     m_bufLen = bufLen;
     m_stdErr = stdErr;
     m_fs = fs;
+    m_customListInfo.offsetList = &m_customListOffsets;
     findCustomLists();
 }
 
@@ -260,7 +261,7 @@ bool MoonboardUtils::openFilteredList(const char *listName, const char *sortOrde
     }
     m_stdErr->printf("'%s' opened ok\n", m_buf);
     m_listType = FILTERED;
-    m_listEnd = false;
+    m_listEnded = false;
     fetchNextProblem();
     return true;
 }
@@ -280,9 +281,9 @@ void MoonboardUtils::closeList() {
 // Read next problem from the currently open list
 // The problem will be pre-fetched into buffer each time
 bool MoonboardUtils::readNextProblem(Problem *prob) {
-    if (m_listEnd) return false; // We reached the end when trying to pre-fetch last time
-    if (!parseProblem(prob, m_buf)) return false;
-    m_listEnd = !fetchNextProblem();
+    if (m_listEnded) return false;                // List exhausted
+    if (!parseProblem(prob, m_buf)) return false; // Parse the one in cache
+    m_listEnded = !fetchNextProblem();            // Fetch next one into cache
     return true;
 }
 
@@ -303,10 +304,12 @@ bool MoonboardUtils::fetchNextProblem() {
         }
         m_data.seek(atoi(_t_ptr_char), SeekSet);
     }
+    if (m_listType == CUSTOM && m_currentProbNum == m_customListInfo.numProblems) return false;
     m_data.readStringUntil('\n').toCharArray(m_buf, m_bufLen);
     if (strlen(m_buf) == 0) {
         return false;
     }
+    if (m_listType == CUSTOM) m_currentProbNum++;
     return true;
 }
 
@@ -550,9 +553,34 @@ bool MoonboardUtils::openCustomList(uint8_t z_listNum) {
     sprintf(m_buf, "/%s/%s.dat", MB_PROBLIST_DIR, m_customListNames[z_listNum]);
     m_data = m_fs->open(m_buf);
     if (!m_data) return false;
+    // Read the number of problems and store
+    m_data.readStringUntil('\n').toCharArray(m_buf, m_bufLen);
+    long int numProbs = strtol(m_buf, NULL, 10);
+    if (numProbs <= 0) return false;
+    m_customListInfo.numProblems = numProbs;
+    while (numProbs > 0) { // Skip through all the problems
+        m_data.readStringUntil('\n');
+        numProbs--;
+    }
+    // Read and store the list of offsets
+    m_customListInfo.offsetList->clear();
+    m_data.readStringUntil(':').toCharArray(m_buf, m_bufLen);
+    while (strlen(m_buf) > 0) {
+        long int offset = strtol(m_buf, NULL, 10);
+        if (offset > 0) m_customListInfo.offsetList->push_back(offset);
+        m_data.readStringUntil(':').toCharArray(m_buf, m_bufLen);
+    }
+    // Reopen the list
+    m_data.close();
+    sprintf(m_buf, "/%s/%s.dat", MB_PROBLIST_DIR, m_customListNames[z_listNum]);
+    m_data = m_fs->open(m_buf);
+    if (!m_data) return false;
+    m_data.readStringUntil('\n'); // Skip the first line (# of problems)
+
     m_selectedCustomList = z_listNum;
     m_listType = CUSTOM;
-    m_listEnd = false;
+    m_currentProbNum = 0;
+    m_listEnded = false;
     fetchNextProblem();
     return true;
 }
@@ -566,4 +594,4 @@ const char *MoonboardUtils::getSelectedCustomListName() {
     return customListNumToName(m_selectedCustomList);
 }
 
-bool MoonboardUtils::listHasNext() { return !m_listEnd; }
+bool MoonboardUtils::listHasNext() { return !m_listEnded; }

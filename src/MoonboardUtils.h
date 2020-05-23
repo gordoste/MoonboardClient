@@ -103,12 +103,15 @@ private:
     char m_selectedFiltListName[MAX_LISTNAME_SIZE + 1];
 
     uint8_t m_selectedCustomList;
+    std::list<uint32_t> m_customListOffsets = std::list<uint32_t>();
+    CustomListInfo m_customListInfo;
+    uint16_t m_currentProbNum = 0;
     uint8_t m_numCustomLists = 0;
     char m_customListNames[MAX_CUSTOM_LISTS][MAX_LISTNAME_SIZE + 1];
 
     File m_list, m_data;
     char *m_buf;
-    bool m_listEnd = false;
+    bool m_listEnded = false;
     uint16_t m_bufLen;
     char *t_catBufPtr = m_catBuf; // While setting up, point to where unused storage starts
     uint8_t m_listDirSz = sizeof(MB_PROBLIST_DIR);
