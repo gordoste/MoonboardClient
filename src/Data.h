@@ -44,11 +44,6 @@ struct SortOrder {
     bool exists; // Does it exist for the current selection?
 };
 
-struct CustomListInfo {
-    uint16_t numProblems;
-    std::list<uint32_t> *offsetList;
-};
-
 int8_t problemAsString(Problem *p, char *buf, size_t bufLen);
 
 #endif // #ifndef _MOONBOARD_DATA_H

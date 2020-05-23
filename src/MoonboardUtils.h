@@ -61,7 +61,8 @@ public:
     bool openSelectedFilteredList(const char *sortOrder);
     bool openCustomList(uint8_t z_listNum);
     const char *getSelectedCustomListName();
-    bool listHasNext();
+    bool listHasPrevPage() { return m_currentPageNum != 0; };
+    bool listHasNext() { return m_listHasNext; };
     void closeList();
 
     int8_t catTypeToNum(const char *catTypeName);
@@ -70,6 +71,8 @@ public:
 
     bool readNextProblem(Problem *p);
     uint8_t readNextProblems(Problem pArr[], uint8_t num);
+    uint8_t getPageSize() { return m_pageSize; }
+    void setPageSize(uint8_t pageSize) { m_pageSize = pageSize; }
 
     bool parseProblem(Problem *p, char *in);
     void printProblem(Problem *p, Print *out);
@@ -102,16 +105,20 @@ private:
     bool m_selectedFiltListExists;
     char m_selectedFiltListName[MAX_LISTNAME_SIZE + 1];
 
-    uint8_t m_selectedCustomList;
-    std::list<uint32_t> m_customListOffsets = std::list<uint32_t>();
-    CustomListInfo m_customListInfo;
-    uint16_t m_currentProbNum = 0;
     uint8_t m_numCustomLists = 0;
     char m_customListNames[MAX_CUSTOM_LISTS][MAX_LISTNAME_SIZE + 1];
+    uint8_t m_selectedCustomList;
+
+    uint16_t m_customListSize = 0;
+    std::vector<uint32_t> m_customListOffsets = std::vector<uint32_t>();
+    uint16_t m_currentProbNum = 0;
+
+    uint8_t m_pageSize = 0;
+    uint16_t m_currentPageNum = 0;
 
     File m_list, m_data;
     char *m_buf;
-    bool m_listEnded = false;
+    bool m_listHasNext = false;
     uint16_t m_bufLen;
     char *t_catBufPtr = m_catBuf; // While setting up, point to where unused storage starts
     uint8_t m_listDirSz = sizeof(MB_PROBLIST_DIR);
