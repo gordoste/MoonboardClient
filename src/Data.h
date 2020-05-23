@@ -2,6 +2,7 @@
 #define _MOONBOARD_DATA_H
 
 #include <Arduino.h>
+#include <list>
 
 #define MAX_CATTYPENAME_LEN 9
 #define MAX_CATS_PER_CATTYPE 5
@@ -41,6 +42,11 @@ struct SortOrder {
     char name[MAX_SORTORDER_NAME_LEN + 1];
     char displayName[MAX_SORTORDER_DSPNAME_LEN + 1];
     bool exists; // Does it exist for the current selection?
+};
+
+struct CustomListInfo {
+    uint16_t numProblems;
+    std::list<uint32_t> *offsetList;
 };
 
 int8_t problemAsString(Problem *p, char *buf, size_t bufLen);
