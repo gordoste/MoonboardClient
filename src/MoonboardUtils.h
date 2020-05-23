@@ -61,7 +61,8 @@ public:
     bool openSelectedFilteredList(const char *sortOrder);
     bool openCustomList(uint8_t z_listNum);
     const char *getSelectedCustomListName();
-    bool listHasPrevPage() { return m_currentPageNum != 0; };
+    uint16_t getPageNum();
+    bool listHasPrevPage() { return m_nextProbNum > m_pageSize; };
     bool listHasNext() { return m_listHasNext; };
     void closeList();
 
@@ -73,6 +74,9 @@ public:
     uint8_t readNextProblems(Problem pArr[], uint8_t num);
     uint8_t getPageSize() { return m_pageSize; }
     void setPageSize(uint8_t pageSize) { m_pageSize = pageSize; }
+    uint8_t readPage(Problem pArr[], uint16_t pageNum);
+    uint8_t readNextPage(Problem pArr[]);
+    uint8_t readPrevPage(Problem pArr[]);
 
     bool parseProblem(Problem *p, char *in);
     void printProblem(Problem *p, Print *out);
@@ -89,6 +93,7 @@ private:
     bool openFilteredList(const char *listName, const char *sortOrder);
     void checkFileIsCustomList(const char *fileName);
     bool fetchNextProblem();
+    bool seekPage(uint16_t pageNum);
 
     const char m_wildcardStr[4] = MB_WILDCARD_STRING;
 
@@ -111,10 +116,9 @@ private:
 
     uint16_t m_customListSize = 0;
     std::vector<uint32_t> m_customListOffsets = std::vector<uint32_t>();
-    uint16_t m_currentProbNum = 0;
+    uint16_t m_nextProbNum = 0;
 
     uint8_t m_pageSize = 0;
-    uint16_t m_currentPageNum = 0;
 
     File m_list, m_data;
     char *m_buf;

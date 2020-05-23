@@ -282,6 +282,7 @@ void MoonboardUtils::closeList() {
 bool MoonboardUtils::readNextProblem(Problem *prob) {
     if (!m_listHasNext) return false;             // List exhausted
     if (!parseProblem(prob, m_buf)) return false; // Parse the one in cache
+    if (m_listType == CUSTOM) m_nextProbNum++;
     m_listHasNext = fetchNextProblem();           // Fetch next one into cache
     return true;
 }
@@ -303,12 +304,11 @@ bool MoonboardUtils::fetchNextProblem() {
         }
         m_data.seek(atoi(_t_ptr_char), SeekSet);
     }
-    if (m_listType == CUSTOM && m_currentProbNum == m_customListSize) return false;
+    if (m_listType == CUSTOM && m_nextProbNum == m_customListSize) return false;
     m_data.readStringUntil('\n').toCharArray(m_buf, m_bufLen);
     if (strlen(m_buf) == 0) {
         return false;
     }
-    if (m_listType == CUSTOM) m_currentProbNum++;
     return true;
 }
 
@@ -578,8 +578,7 @@ bool MoonboardUtils::openCustomList(uint8_t z_listNum) {
 
     m_selectedCustomList = z_listNum;
     m_listType = CUSTOM;
-    m_currentProbNum = 0;
-    m_currentPageNum = 0;
+    m_nextProbNum = 0;
     m_listHasNext = fetchNextProblem();
     return true;
 }
@@ -593,3 +592,29 @@ const char *MoonboardUtils::getSelectedCustomListName() {
     return customListNumToName(m_selectedCustomList);
 }
 
+uint16_t MoonboardUtils::getPageNum() {
+    return (m_nextProbNum-1) / m_pageSize;
+}
+
+uint8_t MoonboardUtils::readNextPage(Problem pArr[]) {
+    return readNextProblems(pArr, m_pageSize);
+}
+
+uint8_t MoonboardUtils::readPrevPage(Problem pArr[]) {
+    if (!seekPage(getPageNum()-1)) return 0;
+    return readNextProblems(pArr, m_pageSize);
+}
+
+uint8_t MoonboardUtils::readPage(Problem pArr[], uint16_t pageNum) {
+    if (!seekPage(pageNum)) return 0;
+    return readNextProblems(pArr, m_pageSize);
+}
+
+bool MoonboardUtils::seekPage(uint16_t pageNum) {
+    if (!m_data) return false;
+    if (pageNum >= m_customListOffsets.size()) return false;
+    if (!m_data.seek(m_customListOffsets[pageNum], SeekSet)) return false;
+    m_nextProbNum = pageNum * m_pageSize;
+    m_listHasNext = fetchNextProblem();
+    return true;
+}
