@@ -11,6 +11,13 @@
 #define MAX_PROBLEMNAME_LEN 42
 #define MAX_HOLDS_PER_PANEL 10
 
+#define PROB_PAGE_SIZE 8
+
+// Directory where problem lists are stored
+#ifndef MB_PROBLIST_DIR
+#define MB_PROBLIST_DIR "/l"
+#endif
+
 const char catWildcardStr[2] = "*";
 
 struct Problem {

@@ -2,6 +2,8 @@
 #define _MOONBOARD_UTILS_H
 
 #include "Data.h"
+#include "MBCustomList.h"
+#include "MBFilteredList.h"
 #include "StringUtils.h"
 #include <FS.h>
 
@@ -14,17 +16,6 @@
 #ifndef MB_WILDCARD_STRING
 #define MB_WILDCARD_STRING "Any"
 #endif
-
-// Directory where problem lists are stored
-#ifndef MB_PROBLIST_DIR
-#define MB_PROBLIST_DIR "/l"
-#endif
-
-enum ListType {
-    NONE = 0,
-    FILTERED = 1,
-    CUSTOM = 2
-};
 
 class MoonboardUtils {
 public:
@@ -40,8 +31,6 @@ public:
     uint8_t getNumCatTypes();
     uint8_t getNumSortOrders();
     uint8_t getNumCustomLists();
-
-    ListType getOpenListType() { return m_listType; }
 
     uint8_t findCustomLists();
     const char *customListNumToName(uint8_t z_listNum);
@@ -59,41 +48,32 @@ public:
     bool selectedFilteredListExists() { return m_selectedFiltListExists; }
 
     bool openSelectedFilteredList(const char *sortOrder);
+    bool openFilteredList(const char *listName, const char *sortOrder);
     bool openCustomList(uint8_t z_listNum);
     const char *getSelectedCustomListName();
     uint16_t getPageNum();
-    bool listHasPrevPage() { return m_nextProbNum > m_pageSize; };
-    bool listHasNext() { return m_listHasNext; };
-    void closeList();
 
     int8_t catTypeToNum(const char *catTypeName);
     char *catNumToName(int8_t z_catType, int8_t z_catNum);
     int8_t catNameToNum(int8_t z_catType, const char *catName);
 
-    bool readNextProblem(Problem *p);
-    uint8_t readNextProblems(Problem pArr[], uint8_t num);
-    uint8_t getPageSize() { return m_pageSize; }
-    void setPageSize(uint8_t pageSize) { m_pageSize = pageSize; }
-    uint8_t readPage(Problem pArr[], uint16_t pageNum);
-    uint8_t readNextPage(Problem pArr[]);
-    uint8_t readPrevPage(Problem pArr[]);
+    MBList *getList() { return m_probList; }
+    bool listIsOpen() { return m_probList != NULL; }
 
     bool parseProblem(Problem *p, char *in);
     void printProblem(Problem *p, Print *out);
 
     void showCatType(Print *outStr, CategoryType *ptrCT);
     void showAllCatTypes(Print *outStr);
-    void showStatus(Print *outStr);
+    // void showStatus(Print *outStr);
 
     void updateStatus();
+
 private:
     void beginCatType(char *catTypeName, bool wildcardOpt = true);
     CategoryType *endCatType();
     void addCat(const char *catName);
-    bool openFilteredList(const char *listName, const char *sortOrder);
     void checkFileIsCustomList(const char *fileName);
-    bool fetchNextProblem();
-    bool seekPage(uint16_t pageNum);
 
     const char m_wildcardStr[4] = MB_WILDCARD_STRING;
 
@@ -105,7 +85,15 @@ private:
     SortOrder m_sortOrders[MAX_SORT_ORDERS]; // Storage for sort order names
     uint8_t m_numSortOrders = 0;
 
-    ListType m_listType = NONE;
+    MBFilteredList m_filtList = MBFilteredList();
+    MBCustomList m_custList = MBCustomList();
+
+    MBList *m_probList;
+    FS *m_fs;
+    Print *m_stdErr;
+    File m_list, m_data;
+    char *m_buf;
+    uint16_t m_bufLen;
 
     bool m_selectedFiltListExists;
     char m_selectedFiltListName[MAX_LISTNAME_SIZE + 1];
@@ -114,16 +102,6 @@ private:
     char m_customListNames[MAX_CUSTOM_LISTS][MAX_LISTNAME_SIZE + 1];
     uint8_t m_selectedCustomList;
 
-    uint16_t m_customListSize = 0;
-    std::vector<uint32_t> m_customListOffsets = std::vector<uint32_t>();
-    uint16_t m_nextProbNum = 0;
-
-    uint8_t m_pageSize = 0;
-
-    File m_list, m_data;
-    char *m_buf;
-    bool m_listHasNext = false;
-    uint16_t m_bufLen;
     char *t_catBufPtr = m_catBuf; // While setting up, point to where unused storage starts
     uint8_t m_listDirSz = sizeof(MB_PROBLIST_DIR);
 
@@ -131,9 +109,6 @@ private:
     int8_t _t_int8_t = 0;
     char *_t_ptr_char = NULL;
     char t_strtok[2]; // Token storage for strtok'ing
-
-    Print *m_stdErr;
-    FS *m_fs;
 };
 
 #endif // #ifndef _MOONBOARD_UTILS_H

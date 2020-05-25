@@ -7,6 +7,8 @@ void MoonboardUtils::begin(char *buf, uint16_t bufLen, FS *fs, Print *stdErr) {
     m_stdErr = stdErr;
     m_fs = fs;
     findCustomLists();
+    m_filtList.begin(buf, bufLen, fs, stdErr, [this](Problem *p, char *str) -> bool { return parseProblem(p, str); });
+    m_custList.begin(buf, bufLen, fs, stdErr, [this](Problem *p, char *str) -> bool { return parseProblem(p, str); });
 }
 
 void MoonboardUtils::setStdErr(Print *stdErr) {
@@ -241,110 +243,19 @@ SortOrder *MoonboardUtils::getSortOrderByName(const char *sortOrderName) {
 
 // Opens the specified list using the specified sort order (NULL for sortOrder means order will be as it is read from the file)
 bool MoonboardUtils::openFilteredList(const char *listName, const char *sortOrder) {
-    closeList();
+    if (m_probList != NULL) {
+        m_probList->close();
+        m_probList = NULL;
+    }
     if (sortOrder == NULL || listName == NULL) return false;
-    sprintf(m_buf, "/%s_%s.lst", listName, sortOrder);
-    m_list = m_fs->open(m_buf);
-    if (!m_list) {
-        m_stdErr->printf("'%s' can't open\n", m_buf);
-        return false;
-    }
-    m_stdErr->printf("'%s' opened ok\n", m_buf);
-    // Read the number of problems and store
-    m_list.readStringUntil('\n').toCharArray(m_buf, m_bufLen);
-    long int numProbs = strtol(m_buf, NULL, 10);
-    if (numProbs <= 0) return false;
-    m_customListSize = numProbs;
-    while (numProbs > 0) { // Skip through all the problems
-        m_list.readStringUntil('\n');
-        numProbs--;
-    }
-    // Read and store the list of offsets
-    m_customListOffsets.clear();
-    m_list.readStringUntil(':').toCharArray(m_buf, m_bufLen);
-    while (strlen(m_buf) > 0) {
-        long int offset = strtol(m_buf, NULL, 10);
-        if (offset > 0) m_customListOffsets.push_back(offset);
-        m_list.readStringUntil(':').toCharArray(m_buf, m_bufLen);
-    }
-    // Reopen the list
-    m_list.close();
-    sprintf(m_buf, "/%s_%s.lst", listName, sortOrder);
-    m_list = m_fs->open(m_buf);
-    if (!m_list) return false;
-    m_list.readStringUntil('\n'); // Skip the first line (# of problems)
-
-    sprintf(m_buf, "/%s.dat", listName);
-    m_data = m_fs->open(m_buf);
-    if (!m_data) {
-        m_list.close();
-        m_stdErr->printf("'%s' can't open\n", m_buf);
-        return false;
-    }
-    m_stdErr->printf("'%s' opened ok\n", m_buf);
-    m_nextProbNum = 0;
-    m_listType = FILTERED;
-    m_listHasNext = fetchNextProblem();
+    if (!m_filtList.open(listName, sortOrder)) return false;
+    m_probList = &m_filtList;
     return true;
 }
 
 // Opens the list corresponding to the selections made (or not) using the specified sort order
 bool MoonboardUtils::openSelectedFilteredList(const char *sortOrder) {
     return openFilteredList(m_selectedFiltListName, sortOrder);
-}
-
-void MoonboardUtils::closeList() {
-    m_list.close();
-    m_data.close();
-    m_listType = NONE;
-}
-
-// Read next problem from the currently open list
-// The problem will be pre-fetched into buffer each time
-bool MoonboardUtils::readNextProblem(Problem *prob) {
-    if (!m_listHasNext) return false;             // List exhausted
-    if (!parseProblem(prob, m_buf)) return false; // Parse the one in cache
-    m_nextProbNum++;
-    m_listHasNext = fetchNextProblem(); // Fetch next one into cache
-    return true;
-}
-
-// m_nextProbNum needs to already be set to the new value before calling
-bool MoonboardUtils::fetchNextProblem() {
-    if (!m_data) {
-        return false;
-    } // Check list is open
-    if (m_list) {
-        strcpy(t_strtok, ":");
-        m_list.readStringUntil('\n').toCharArray(m_buf, m_bufLen);
-        _t_ptr_char = StringUtils::strtoke(m_buf, t_strtok);
-        if (_t_ptr_char == NULL) {
-            return false;
-        }
-        _t_ptr_char = StringUtils::strtoke(NULL, t_strtok);
-        if (_t_ptr_char == NULL) {
-            return false;
-        }
-        m_data.seek(atoi(_t_ptr_char), SeekSet);
-    }
-    if (m_nextProbNum == m_customListSize) return false;
-    m_data.readStringUntil('\n').toCharArray(m_buf, m_bufLen);
-    if (strlen(m_buf) == 0) {
-        return false;
-    }
-    return true;
-}
-
-// Read problems (up to max. # specified) from the open list into given array. Returns # problems read.
-uint8_t MoonboardUtils::readNextProblems(Problem pArr[], uint8_t max) {
-    _t_uint8_t = 0;
-    while (_t_uint8_t < max) {
-        if (!readNextProblem(&(pArr[_t_uint8_t]))) {
-            return _t_uint8_t;
-        }
-        _t_uint8_t++;
-    }
-    return _t_uint8_t;
 }
 
 // read the string, placing data in the problem struct passed. Return true on success
@@ -489,31 +400,31 @@ void MoonboardUtils::showAllCatTypes(Print *outStr) {
     }
 }
 
-void MoonboardUtils::showStatus(Print *outStr) {
-    switch (m_listType) {
-    default:
-        break;
-    case NONE:
-        outStr->println("No problem list selected currently.");
-        break;
-    case CUSTOM:
-        outStr->printf("Custom list '%s' selected.\n", m_customListNames[m_selectedCustomList]);
-        break;
-    case FILTERED:
-        outStr->printf("Filter name '%s' selected. Available sort orders: ", m_selectedFiltListName);
-        SortOrder *ptrSO;
-        _t_uint8_t = 0;
-        bool t_started = false;
-        while (ptrSO = getSortOrder(_t_uint8_t++)) {
-            if (ptrSO->exists) {
-                outStr->printf((t_started ? ", %s" : "%s"), ptrSO->displayName);
-                t_started = true;
-            }
-        }
-        outStr->println();
-        break;
-    }
-}
+// void MoonboardUtils::showStatus(Print *outStr) {
+//     switch (m_listType) {
+//     default:
+//         break;
+//     case NONE:
+//         outStr->println("No problem list selected currently.");
+//         break;
+//     case CUSTOM:
+//         outStr->printf("Custom list '%s' selected.\n", m_customListNames[m_selectedCustomList]);
+//         break;
+//     case FILTERED:
+//         outStr->printf("Filter name '%s' selected. Available sort orders: ", m_selectedFiltListName);
+//         SortOrder *ptrSO;
+//         _t_uint8_t = 0;
+//         bool t_started = false;
+//         while (ptrSO = getSortOrder(_t_uint8_t++)) {
+//             if (ptrSO->exists) {
+//                 outStr->printf((t_started ? ", %s" : "%s"), ptrSO->displayName);
+//                 t_started = true;
+//             }
+//         }
+//         outStr->println();
+//         break;
+//     }
+// }
 
 uint8_t MoonboardUtils::getNumCatTypes() { return m_numCatTypes; }
 uint8_t MoonboardUtils::getNumSortOrders() { return m_numSortOrders; }
@@ -570,40 +481,17 @@ void MoonboardUtils::checkFileIsCustomList(const char *fileName) {
 }
 
 bool MoonboardUtils::openCustomList(uint8_t z_listNum) {
-    closeList();
+    if (m_probList != NULL) {
+        m_probList->close();
+        m_probList = NULL;
+    }
     if (z_listNum >= m_numCustomLists) return false;
-    sprintf(m_buf, "/%s/%s.dat", MB_PROBLIST_DIR, m_customListNames[z_listNum]);
-    m_data = m_fs->open(m_buf);
-    if (!m_data) return false;
-    // Read the number of problems and store
-    m_data.readStringUntil('\n').toCharArray(m_buf, m_bufLen);
-    long int numProbs = strtol(m_buf, NULL, 10);
-    if (numProbs <= 0) return false;
-    m_customListSize = numProbs;
-    while (numProbs > 0) { // Skip through all the problems
-        m_data.readStringUntil('\n');
-        numProbs--;
+    if (m_custList.open(m_customListNames[z_listNum], "name")) {
+        m_selectedCustomList = z_listNum;
+        m_probList = &m_custList;
+        return true;
     }
-    // Read and store the list of offsets
-    m_customListOffsets.clear();
-    m_data.readStringUntil(':').toCharArray(m_buf, m_bufLen);
-    while (strlen(m_buf) > 0) {
-        long int offset = strtol(m_buf, NULL, 10);
-        if (offset > 0) m_customListOffsets.push_back(offset);
-        m_data.readStringUntil(':').toCharArray(m_buf, m_bufLen);
-    }
-    // Reopen the list
-    m_data.close();
-    sprintf(m_buf, "/%s/%s.dat", MB_PROBLIST_DIR, m_customListNames[z_listNum]);
-    m_data = m_fs->open(m_buf);
-    if (!m_data) return false;
-    m_data.readStringUntil('\n'); // Skip the first line (# of problems)
-
-    m_selectedCustomList = z_listNum;
-    m_listType = CUSTOM;
-    m_nextProbNum = 0;
-    m_listHasNext = fetchNextProblem();
-    return true;
+    return false;
 }
 
 const char *MoonboardUtils::customListNumToName(uint8_t z_listNum) {
@@ -611,38 +499,5 @@ const char *MoonboardUtils::customListNumToName(uint8_t z_listNum) {
 }
 
 const char *MoonboardUtils::getSelectedCustomListName() {
-    if (m_listType != CUSTOM) return NULL;
     return customListNumToName(m_selectedCustomList);
-}
-
-uint16_t MoonboardUtils::getPageNum() {
-    return (m_nextProbNum - 1) / m_pageSize;
-}
-
-uint8_t MoonboardUtils::readNextPage(Problem pArr[]) {
-    return readNextProblems(pArr, m_pageSize);
-}
-
-uint8_t MoonboardUtils::readPrevPage(Problem pArr[]) {
-    if (!seekPage(getPageNum() - 1)) return 0;
-    return readNextProblems(pArr, m_pageSize);
-}
-
-uint8_t MoonboardUtils::readPage(Problem pArr[], uint16_t pageNum) {
-    if (!seekPage(pageNum)) return 0;
-    return readNextProblems(pArr, m_pageSize);
-}
-
-bool MoonboardUtils::seekPage(uint16_t pageNum) {
-    if (!m_data) return false;
-    if (pageNum >= m_customListOffsets.size()) return false;
-    if (m_listType == CUSTOM) {
-        if (!m_data.seek(m_customListOffsets[pageNum], SeekSet)) return false;
-    }
-    if (m_listType == FILTERED) {
-        if (!m_list.seek(m_customListOffsets[pageNum], SeekSet)) return false;
-    }
-    m_nextProbNum = pageNum * m_pageSize;
-    m_listHasNext = fetchNextProblem();
-    return true;
 }
