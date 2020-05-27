@@ -7,8 +7,9 @@ void MoonboardUtils::begin(char *buf, uint16_t bufLen, FS *fs, Print *stdErr) {
     m_stdErr = stdErr;
     m_fs = fs;
     findCustomLists();
-    m_filtList.begin(buf, bufLen, fs, stdErr, [this](Problem *p, char *str) -> bool { return parseProblem(p, str); });
-    m_custList.begin(buf, bufLen, fs, stdErr, [this](Problem *p, char *str) -> bool { return parseProblem(p, str); });
+    m_probListMem.probParser = ([this](Problem *p, char *str) -> bool { return parseProblem(p, str); });
+    m_filtList.begin(buf, bufLen, fs, stdErr, &m_probListMem); 
+    m_custList.begin(buf, bufLen, fs, stdErr, &m_probListMem);
 }
 
 void MoonboardUtils::setStdErr(Print *stdErr) {
@@ -23,8 +24,8 @@ SortOrder *MoonboardUtils::addSortOrder(const char *sortOrderStr) {
     }
     strcpy(m_buf, sortOrderStr);
     strcpy(t_strtok, ":");
-    _t_ptr_char = StringUtils::strtoke(m_buf, t_strtok);
-    _t_uint8_t = strlen(_t_ptr_char); // +1 for null terminator
+    char *_t_ptr_char = StringUtils::strtoke(m_buf, t_strtok);
+    uint8_t _t_uint8_t = strlen(_t_ptr_char); // +1 for null terminator
     if (_t_uint8_t > MAX_SORTORDER_NAME_LEN) {
         m_stdErr->printf("MBU:sSO - '%s' too long\n", _t_ptr_char);
         return NULL;
@@ -60,7 +61,7 @@ CategoryType *MoonboardUtils::endCatType() {
 }
 
 void MoonboardUtils::addCat(const char *catName) {
-    _t_uint8_t = strlen(catName) + 1; // +1 for null terminator
+    uint8_t _t_uint8_t = strlen(catName) + 1; // +1 for null terminator
     if (t_catBufPtr - m_catBuf + _t_uint8_t > sizeof(m_catBuf)) {
         m_stdErr->println(F("MBU::aC - Exhausted catBuf"));
         return;
@@ -74,7 +75,7 @@ void MoonboardUtils::addCat(const char *catName) {
 CategoryType *MoonboardUtils::addCatType(const char *catType, bool wildcardOpt) {
     strcpy(m_buf, catType);
     strcpy(t_strtok, ":");
-    _t_ptr_char = StringUtils::strtoke(m_buf, t_strtok);
+    char *_t_ptr_char = StringUtils::strtoke(m_buf, t_strtok);
     beginCatType(_t_ptr_char, wildcardOpt);
     while ((_t_ptr_char = StringUtils::strtoke(NULL, t_strtok))) {
         addCat(_t_ptr_char);
@@ -93,7 +94,7 @@ SortOrder *MoonboardUtils::getSortOrder(int8_t z_sortOrder) {
 }
 
 void MoonboardUtils::selectCat_ss(const char *catTypeName, const char *catName) {
-    _t_int8_t = catTypeToNum(catTypeName);
+    uint8_t _t_int8_t = catTypeToNum(catTypeName);
     if (_t_int8_t == -1) {
         m_stdErr->printf("MBU::sC - Bad catType '%s'\n", catTypeName);
         return;
@@ -102,7 +103,7 @@ void MoonboardUtils::selectCat_ss(const char *catTypeName, const char *catName) 
 }
 
 void MoonboardUtils::selectCat_is(int8_t z_catType, const char *catName) {
-    _t_int8_t = catNameToNum(z_catType, catName);
+    uint8_t _t_int8_t = catNameToNum(z_catType, catName);
     if (_t_int8_t == -1) {
         m_stdErr->printf("MBU::sC - Bad cat '%s'\n", catName);
         return;
@@ -111,7 +112,7 @@ void MoonboardUtils::selectCat_is(int8_t z_catType, const char *catName) {
 }
 
 void MoonboardUtils::selectCat_si(const char *catTypeName, int8_t z_catNum) {
-    _t_int8_t = catTypeToNum(catTypeName);
+    uint8_t _t_int8_t = catTypeToNum(catTypeName);
     if (_t_int8_t == -1) {
         m_stdErr->printf("MBU::sC - Bad catType '%s'\n", catTypeName);
         return;
@@ -133,7 +134,7 @@ void MoonboardUtils::selectCat_ii(int8_t z_catType, int8_t z_catNum) {
 }
 
 void MoonboardUtils::unselectCat_s(const char *catTypeName) {
-    _t_int8_t = catTypeToNum(catTypeName);
+    uint8_t _t_int8_t = catTypeToNum(catTypeName);
     if (_t_int8_t == -1) {
         m_stdErr->printf("MBU::uC - Bad catType '%s'\n", catTypeName);
         return;
@@ -152,7 +153,7 @@ void MoonboardUtils::unselectCat_i(int8_t z_catType) {
 
 // Search for a category type with specified name and return the index. -1 if not found
 int8_t MoonboardUtils::catTypeToNum(const char *catTypeName) {
-    for (_t_uint8_t = 0; _t_uint8_t < m_numCatTypes; _t_uint8_t++) {
+    for (uint8_t _t_uint8_t = 0; _t_uint8_t < m_numCatTypes; _t_uint8_t++) {
         if (strcmp(catTypeName, m_catTypes[_t_uint8_t].name) == 0) {
             return _t_uint8_t;
         }
@@ -165,7 +166,7 @@ int8_t MoonboardUtils::catNameToNum(int8_t z_catType, const char *catName) {
     if (z_catType >= m_numCatTypes) {
         return -1;
     }
-    for (_t_uint8_t = 0; _t_uint8_t < m_catTypes[z_catType].catCount; _t_uint8_t++) {
+    for (uint8_t _t_uint8_t = 0; _t_uint8_t < m_catTypes[z_catType].catCount; _t_uint8_t++) {
         if (strcmp(catName, m_catTypes[_t_uint8_t].name) == 0) {
             return _t_uint8_t;
         }
@@ -220,11 +221,11 @@ void MoonboardUtils::updateStatus() {
     // Check which category types have an ordered index for the selected list
     m_buf[0] = '/';
     strcpy(&(m_buf[1]), m_selectedFiltListName);
-    _t_ptr_char = &(m_buf[strlen(m_buf)]); // points to the null terminator after /filename
+    char *_t_ptr_char = &(m_buf[strlen(m_buf)]); // points to the null terminator after /filename
     strcpy(_t_ptr_char, ".dat");           // Check if the problem data file (/filename.dat) exists
     m_selectedFiltListExists = m_fs->exists(m_buf);
     // iterate sort orders
-    for (_t_uint8_t = 0; _t_uint8_t < m_numSortOrders; _t_uint8_t++) {
+    for (uint8_t _t_uint8_t = 0; _t_uint8_t < m_numSortOrders; _t_uint8_t++) {
         // check whether an index file (/filename_sortname.lst) exists for each
         sprintf(_t_ptr_char, "_%s.lst", m_sortOrders[_t_uint8_t].name);
         m_sortOrders[_t_uint8_t].exists = m_fs->exists(m_buf);
@@ -233,7 +234,7 @@ void MoonboardUtils::updateStatus() {
 
 // Search for a sort order with specified name and return the index. NULL if not found
 SortOrder *MoonboardUtils::getSortOrderByName(const char *sortOrderName) {
-    for (_t_uint8_t = 0; _t_uint8_t < m_numSortOrders; _t_uint8_t++) {
+    for (uint8_t _t_uint8_t = 0; _t_uint8_t < m_numSortOrders; _t_uint8_t++) {
         if (strcmp(sortOrderName, m_sortOrders[_t_uint8_t].name) == 0) {
             return &(m_sortOrders[_t_uint8_t]);
         }
@@ -261,7 +262,7 @@ bool MoonboardUtils::openSelectedFilteredList(const char *sortOrder) {
 // read the string, placing data in the problem struct passed. Return true on success
 bool MoonboardUtils::parseProblem(Problem *prob, char *in) {
     strcpy(t_strtok, "|"); // need room for null terminator
-    _t_ptr_char = StringUtils::strtoke(in, t_strtok);
+    char *_t_ptr_char = StringUtils::strtoke(in, t_strtok);
     if (_t_ptr_char == NULL) {
         return false;
     }
@@ -394,7 +395,7 @@ void MoonboardUtils::showCatType(Print *outStr, CategoryType *ptrCT) {
 
 void MoonboardUtils::showAllCatTypes(Print *outStr) {
     CategoryType *ptrCT;
-    _t_uint8_t = 0;
+    uint8_t _t_uint8_t = 0;
     while (ptrCT = getCatType(_t_uint8_t++)) {
         showCatType(outStr, ptrCT);
     }
@@ -459,7 +460,7 @@ uint8_t MoonboardUtils::findCustomLists() {
         m_stdErr->print('.');
         if (strncmp(MB_PROBLIST_DIR, fnam, listDirSz) == 0) {
             // SPIFFS has no directories, it treats dirname as part of filename. Look for files with /PROBDIR/ at the start
-            if (fnam[_t_uint8_t + 1] == '/') {
+            if (fnam[listDirSz] == '/') {
                 checkFileIsCustomList(fnam);
             }
         }
@@ -471,7 +472,7 @@ uint8_t MoonboardUtils::findCustomLists() {
 }
 
 void MoonboardUtils::checkFileIsCustomList(const char *fileName) {
-    _t_uint8_t = strlen(fileName);
+    uint8_t _t_uint8_t = strlen(fileName);
     if (strncmp(&(fileName[_t_uint8_t - 4]), ".dat", 4) == 0) {
         strncpy(m_customListNames[m_numCustomLists], &(fileName[m_listDirSz]), _t_uint8_t - 4 - m_listDirSz);
         m_customListNames[m_numCustomLists][_t_uint8_t] = '\0';

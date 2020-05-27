@@ -89,6 +89,7 @@ private:
     MBCustomList m_custList = MBCustomList();
 
     MBList *m_probList;
+    MBListMem m_probListMem = MBListMem();
     FS *m_fs;
     Print *m_stdErr;
     File m_list, m_data;
@@ -105,9 +106,6 @@ private:
     char *t_catBufPtr = m_catBuf; // While setting up, point to where unused storage starts
     uint8_t m_listDirSz = sizeof(MB_PROBLIST_DIR);
 
-    uint8_t _t_uint8_t = 0;
-    int8_t _t_int8_t = 0;
-    char *_t_ptr_char = NULL;
     char t_strtok[2]; // Token storage for strtok'ing
 };
 
