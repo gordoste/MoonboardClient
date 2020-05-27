@@ -8,7 +8,7 @@ void MoonboardUtils::begin(char *buf, uint16_t bufLen, FS *fs, Print *stdErr) {
     m_fs = fs;
     findCustomLists();
     m_probListMem.probParser = ([this](Problem *p, char *str) -> bool { return parseProblem(p, str); });
-    m_filtList.begin(buf, bufLen, fs, stdErr, &m_probListMem); 
+    m_filtList.begin(buf, bufLen, fs, stdErr, &m_probListMem);
     m_custList.begin(buf, bufLen, fs, stdErr, &m_probListMem);
 }
 
@@ -222,7 +222,7 @@ void MoonboardUtils::updateStatus() {
     m_buf[0] = '/';
     strcpy(&(m_buf[1]), m_selectedFiltListName);
     char *_t_ptr_char = &(m_buf[strlen(m_buf)]); // points to the null terminator after /filename
-    strcpy(_t_ptr_char, ".dat");           // Check if the problem data file (/filename.dat) exists
+    strcpy(_t_ptr_char, ".dat");                 // Check if the problem data file (/filename.dat) exists
     m_selectedFiltListExists = m_fs->exists(m_buf);
     // iterate sort orders
     for (uint8_t _t_uint8_t = 0; _t_uint8_t < m_numSortOrders; _t_uint8_t++) {
