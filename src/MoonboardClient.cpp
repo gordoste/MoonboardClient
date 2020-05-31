@@ -51,14 +51,15 @@ void MoonboardClient::stop() { return; }
 bool MoonboardClient::isConnected() { return true; }
 #endif
 
-void MoonboardClient::begin(BasicLog *_log) {
+void MoonboardClient::begin(BasicLog *_log, MBConfigData *_config) {
     m_log = _log;
+    m_config = _config;
     m_btmPnl.begin(_log);
     m_midPnl.begin(_log);
     m_topPnl.begin(_log);
-    m_btmPnl.setAddress(IPAddress(MB_IP_ADDRESS), MB_PANEL_BTM_PORT);
-    m_midPnl.setAddress(IPAddress(MB_IP_ADDRESS), MB_PANEL_MID_PORT);
-    m_topPnl.setAddress(IPAddress(MB_IP_ADDRESS), MB_PANEL_TOP_PORT);
+    m_btmPnl.setAddress(_config->btm_panel_ip, _config->btm_port);
+    m_midPnl.setAddress(_config->mid_panel_ip, _config->mid_port);
+    m_topPnl.setAddress(_config->top_panel_ip, _config->top_port);
 }
 
 BasicLog *MoonboardClient::getLog() {
