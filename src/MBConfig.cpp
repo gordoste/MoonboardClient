@@ -2,17 +2,23 @@
 
 MBConfigData *MBConfig::read(File &configFile) {
     if (!m_data.top_panel_ip.fromString(configFile.readStringUntil(':'))) return NULL;
+    m_data.top_port = atoi(configFile.readStringUntil('|').c_str());
     if (!m_data.mid_panel_ip.fromString(configFile.readStringUntil(':'))) return NULL;
+    m_data.mid_port = atoi(configFile.readStringUntil('|').c_str());
     if (!m_data.btm_panel_ip.fromString(configFile.readStringUntil(':'))) return NULL;
-    m_data.flags = atoi(configFile.readStringUntil(':').c_str());
+    m_data.btm_port = atoi(configFile.readStringUntil('|').c_str());
+    m_data.flags = atoi(configFile.readStringUntil('|').c_str());
     return &m_data;
 }
 
 bool MBConfig::write(File &configFile) {
-    return configFile.printf("%s:%s:%s:%i:",
+    return configFile.printf("%s:%i|%s:%i|%s:%i|%i|",
                       m_data.top_panel_ip.toString().c_str(),
+                      m_data.top_port,
                       m_data.mid_panel_ip.toString().c_str(),
+                      m_data.mid_port,
                       m_data.btm_panel_ip.toString().c_str(),
+                      m_data.btm_port,
                       m_data.flags) > 0;
 }
 

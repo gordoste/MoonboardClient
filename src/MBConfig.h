@@ -8,8 +8,11 @@
 
 struct MBConfigData {
     IPAddress top_panel_ip;
+    uint16_t top_port;
     IPAddress mid_panel_ip;
+    uint16_t mid_port;
     IPAddress btm_panel_ip;
+    uint16_t btm_port;
     uint8_t flags;
 };
 
