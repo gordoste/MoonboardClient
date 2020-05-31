@@ -2,6 +2,16 @@
 
 #ifndef MOONBOARD_DISABLED
 
+// This one has connect rate limiting and is suitable for putting in loops
+int MoonboardClient::tryConnect(uint16_t retryTimeout) {
+    if (isConnected()) return 1;
+    if (millis() > m_lastConnAttemptTime + retryTimeout*1000) {
+        m_log->log("Attempting to connect to moonboard...");
+        return connect();
+    }
+    return 0; // Not time to retry yet
+}
+
 int MoonboardClient::connect() {
     m_btmPnl.connect();
     m_midPnl.connect();

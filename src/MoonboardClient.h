@@ -13,10 +13,12 @@ protected:
     PanelClient m_btmPnl;
     PanelClient m_midPnl;
     PanelClient m_topPnl;
+    uint32_t m_lastConnAttemptTime = 0;
 
 public:
     MoonboardClient(){};
     void begin(BasicLog *_log, MBConfigData *_config);
+    int tryConnect(uint16_t _retryTime = 10);
     int connect();
     BasicLog *getLog();
     void setLog(BasicLog *);
