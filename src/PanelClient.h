@@ -10,9 +10,10 @@
 #include <BasicLog.h>
 #include <SSD1306Console.h>
 
-#define PANEL_RCVBUF_LEN 256 // Receive buffer length
-#define PANEL_SNDBUF_LEN 256 // Send buffer length
-#define PANEL_RCV_TIMEOUT 10 // Receive timeout (s)
+#define PANEL_RCVBUF_LEN 256  // Receive buffer length
+#define PANEL_SNDBUF_LEN 256  // Send buffer length
+#define PANEL_CONN_TIMEOUT 5 // Connect timeout (s)
+#define PANEL_RCV_TIMEOUT 10  // Receive timeout (s)
 
 class PanelClient {
 protected:
