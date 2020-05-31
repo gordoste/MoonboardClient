@@ -22,6 +22,29 @@ bool MBConfig::write(File &configFile) {
                       m_data.flags) > 0;
 }
 
+MBConfigData *MBConfig::fromString(char *str) {
+    char *tokptr = NULL;
+    tokptr = strtok(str, ":");
+    if (tokptr == NULL || !m_data.top_panel_ip.fromString(tokptr)) return NULL;
+    tokptr = strtok(str, "|");
+    if (tokptr == NULL) return NULL;
+    m_data.top_port = atoi(tokptr);
+    tokptr = strtok(str, ":");
+    if (tokptr == NULL || !m_data.mid_panel_ip.fromString(tokptr)) return NULL;
+    tokptr = strtok(str, "|");
+    if (tokptr == NULL) return NULL;
+    m_data.mid_port = atoi(tokptr);
+    tokptr = strtok(str, ":");
+    if (tokptr == NULL || !m_data.btm_panel_ip.fromString(tokptr)) return NULL;
+    tokptr = strtok(str, "|");
+    if (tokptr == NULL) return NULL;
+    m_data.btm_port = atoi(tokptr);
+    tokptr = strtok(str, "|");
+    if (tokptr == NULL) return NULL;
+    m_data.flags = atoi(tokptr);
+    return &m_data;
+}
+
 void MBConfig::setFlags(bool testMode) {
     m_data.flags = (testMode ? MBCONFIG_TEST_MODE : 0x0); // OR any other flags here
 }

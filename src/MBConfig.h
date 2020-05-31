@@ -20,6 +20,7 @@ class MBConfig {
 public:
     MBConfigData *read(File &configFile);
     bool write(File &configFile);
+    MBConfigData *fromString(char *str);
     void setFlags(bool testMode);
     bool testMode();
 
