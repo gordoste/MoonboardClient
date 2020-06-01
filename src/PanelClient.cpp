@@ -27,6 +27,7 @@ void PanelClient::setAddress(IPAddress host, uint16_t port) {
 }
 
 int PanelClient::connect() {
+    if (m_client.connected()) return 1;
     return m_client.connect(m_hostIP, m_port, PANEL_CONN_TIMEOUT);
 }
 

@@ -2,14 +2,14 @@
 
 #ifndef MOONBOARD_DISABLED
 
-// This one has connect rate limiting and is suitable for putting in loops
+// This one has connect rate limiting and is suitable for putting in loops. -1 = disconnected, not time to reconnect
 int MoonboardClient::tryConnect(uint16_t retryTimeout) {
     if (isConnected()) return 1;
     if (millis() > m_lastConnAttemptTime + retryTimeout*1000) {
         m_log->log("Attempting to connect to moonboard...");
         return connect();
     }
-    return 0; // Not time to retry yet
+    return -1; // Not time to retry yet
 }
 
 int MoonboardClient::connect() {
