@@ -7,6 +7,7 @@ int MoonboardClient::tryConnect(uint16_t retryTimeout) {
     if (isConnected()) return 1;
     if (millis() > m_lastConnAttemptTime + retryTimeout*1000) {
         m_log->log("Attempting to connect to moonboard...");
+        m_lastConnAttemptTime = millis();
         return connect();
     }
     return -1; // Not time to retry yet
