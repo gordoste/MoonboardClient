@@ -5,15 +5,16 @@
 // This one has connect rate limiting and is suitable for putting in loops. -1 = disconnected, not time to reconnect
 int MoonboardClient::tryConnect(uint16_t retryTimeout) {
     if (isConnected()) return 1;
-    if (millis() > m_lastConnAttemptTime + retryTimeout*1000) {
+    if (millis() > m_lastConnAttemptTime + retryTimeout * 1000) {
         m_log->log("Attempting to connect to moonboard...");
-        m_lastConnAttemptTime = millis();
         return connect();
     }
     return -1; // Not time to retry yet
 }
 
 int MoonboardClient::connect() {
+    if (isConnected()) return 1;
+    m_lastConnAttemptTime = millis();
     m_btmPnl.connect();
     m_midPnl.connect();
     m_topPnl.connect();
