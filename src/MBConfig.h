@@ -20,6 +20,7 @@ class MBConfig {
 public:
     MBConfigData *read(Stream &configFile);
     bool write(Stream &cfgStream);
+    bool writeHumanReadable(Stream &cfgStream);
     MBConfigData *fromString(char *str);
     void setFlags(bool testMode);
     bool testMode();

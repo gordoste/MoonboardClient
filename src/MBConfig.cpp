@@ -20,6 +20,16 @@ bool MBConfig::write(Stream &cfgStream) {
                       m_data.btm_panel_ip.toString().c_str(),
                       m_data.btm_port,
                       m_data.flags) > 0;
+
+bool MBConfig::writeHumanReadable(Stream &cfgStream) {
+    return cfgStream.printf("Top: %s:%i\r\nMiddle: %s:%i\r\nBottom: %s:%i\r\nFlags: %i\r\n",
+                            m_data.top_panel_ip.toString().c_str(),
+                            m_data.top_port,
+                            m_data.mid_panel_ip.toString().c_str(),
+                            m_data.mid_port,
+                            m_data.btm_panel_ip.toString().c_str(),
+                            m_data.btm_port,
+                            m_data.flags) > 0;
 }
 
 MBConfigData *MBConfig::fromString(char *str) {
