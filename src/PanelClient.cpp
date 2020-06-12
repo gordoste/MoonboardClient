@@ -36,7 +36,7 @@ void PanelClient::stop() {
     m_client.stop();
 }
 
-void PanelClient::sendCommand(const char *cmd, const char *data) {
+bool PanelClient::sendCommand(const char *cmd, const char *data) {
     m_log->debug2("sendCommand(%s %d %s)", cmd, m_cmdId, data ? data : "");
     sprintf(sendBuf, "%s %d", cmd, m_cmdId);
     m_log->debug("write:%s", sendBuf);
@@ -49,8 +49,10 @@ void PanelClient::sendCommand(const char *cmd, const char *data) {
     m_client.write('\n');
     if (!waitForAck(m_cmdId)) {
         m_log->debug("sendCommand failed");
+        return false;
     }
     m_cmdId++;
+    return true;
 };
 
 void PanelClient::clearBoard() {

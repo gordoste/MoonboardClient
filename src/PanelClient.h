@@ -33,7 +33,7 @@ public:
     void setAddress(IPAddress host, uint16_t port);
     int connect();
     void stop();
-    void sendCommand(const char *cmd, const char *data = NULL);
+    bool sendCommand(const char *cmd, const char *data = NULL);
     void clearBoard();
     void lightHolds(const char *holdList);
     bool waitForAck(int cmdId);
