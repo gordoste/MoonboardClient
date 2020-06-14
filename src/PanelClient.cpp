@@ -4,33 +4,6 @@ void PanelClient::begin(BasicLog *_log) {
     m_log = _log;
 }
 
-Client *PanelClient::getClient() {
-    return &m_client;
-}
-
-BasicLog *PanelClient::getLog() {
-    return m_log;
-}
-
-void PanelClient::setLog(BasicLog *_log) {
-    m_log = _log;
-}
-
-void PanelClient::setAddress(const char *host, uint16_t port) {
-    WiFi.hostByName(host, m_hostIP);
-    m_port = port;
-}
-
-void PanelClient::setAddress(IPAddress host, uint16_t port) {
-    m_hostIP = host;
-    m_port = port;
-}
-
-int PanelClient::connect() {
-    if (m_client.connected()) return 1;
-    return m_client.connect(m_hostIP, m_port, PANEL_CONN_TIMEOUT);
-}
-
 void PanelClient::stop() {
     if (!m_client.connected()) return;
     m_client.stop();

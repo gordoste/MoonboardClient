@@ -13,21 +13,18 @@ protected:
     PanelClient m_btmPnl;
     PanelClient m_midPnl;
     PanelClient m_topPnl;
-    uint32_t m_lastConnAttemptTime = 0;
 
 public:
     MoonboardClient(){};
     void begin(BasicLog *_log, MBConfigData *_config);
-    int tryConnect(uint16_t _retryTime = 10);
-    int connect();
-    BasicLog *getLog();
-    void setLog(BasicLog *);
+    BasicLog *getLog() { return m_log; };
+    void setLog(BasicLog *l) { m_log = l; };
     bool readProblem(Problem *p, char *in);
     void showProblem(Problem *p);
     void clearBoard();
     void stop();
     bool isConnected();
-    uint32_t getLastConnAttemptTime() { return m_lastConnAttemptTime; }
+    bool registerClient(const char *id, WiFiClient _conn);
 };
 
 #endif // #ifndef _MOONBOARD_CLIENT_H

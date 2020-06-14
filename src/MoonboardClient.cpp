@@ -1,31 +1,14 @@
 #include "MoonboardClient.h"
 
+void MoonboardClient::begin(BasicLog *_log, MBConfigData *_config) {
+    m_log = _log;
+    m_config = _config;
+    m_btmPnl.begin(_log);
+    m_midPnl.begin(_log);
+    m_topPnl.begin(_log);
+}
+
 #ifndef MOONBOARD_DISABLED
-
-// This one has connect rate limiting and is suitable for putting in loops. -1 = disconnected, not time to reconnect
-int MoonboardClient::tryConnect(uint16_t retryTimeout) {
-    if (isConnected()) return 1;
-    if (millis() > m_lastConnAttemptTime + retryTimeout * 1000) {
-        m_log->log("Attempting to connect to moonboard...");
-        return connect();
-    }
-    return -1; // Not time to retry yet
-}
-
-int MoonboardClient::connect() {
-    if (isConnected()) return 1;
-    m_lastConnAttemptTime = millis();
-    m_btmPnl.connect();
-    m_midPnl.connect();
-    m_topPnl.connect();
-    if (!isConnected()) {
-        m_log->error("Failed to connect to moonboard");
-        stop();
-        return 0;
-    }
-    m_log->log("Connected to moonboard");
-    return 1;
-}
 
 void MoonboardClient::showProblem(Problem *p) {
     if (!isConnected()) return;
@@ -49,35 +32,33 @@ void MoonboardClient::stop() {
 }
 
 bool MoonboardClient::isConnected() {
-    return m_btmPnl.getClient()->connected() &&
-           m_midPnl.getClient()->connected() &&
-           m_topPnl.getClient()->connected();
+    return (m_btmPnl.getClient() && m_btmPnl.getClient().connected()) &&
+           (m_midPnl.getClient() && m_midPnl.getClient().connected()) &&
+           (m_topPnl.getClient() && m_topPnl.getClient().connected());
+}
+
+bool MoonboardClient::registerClient(const char *id, WiFiClient _conn) {
+    if (strcmp(id, "moonboard_top") == 0) {
+        m_topPnl.setClient(_conn);
+        return true;
+    }
+    if (strcmp(id, "moonboard_mid") == 0) {
+        m_midPnl.setClient(_conn);
+        return true;
+    }
+    if (strcmp(id, "moonboard_btm") == 0) {
+        m_btmPnl.setClient(_conn);
+        return true;
+    }
+    return false;
 }
 
 #else // #ifdef MOONBOARD_DISABLED
 
-int MoonboardClient::connect() { return 1; }
 void MoonboardClient::showProblem(Problem *p) { return; }
 void MoonboardClient::clearBoard() { return; }
 void MoonboardClient::stop() { return; }
 bool MoonboardClient::isConnected() { return true; }
+bool MoonboardClient::registerClient(const char *id, WiFiClient _conn) { return true; }
+
 #endif
-
-void MoonboardClient::begin(BasicLog *_log, MBConfigData *_config) {
-    m_log = _log;
-    m_config = _config;
-    m_btmPnl.begin(_log);
-    m_midPnl.begin(_log);
-    m_topPnl.begin(_log);
-    m_btmPnl.setAddress(_config->btm_panel_ip, _config->btm_port);
-    m_midPnl.setAddress(_config->mid_panel_ip, _config->mid_port);
-    m_topPnl.setAddress(_config->top_panel_ip, _config->top_port);
-}
-
-BasicLog *MoonboardClient::getLog() {
-    return m_log;
-}
-
-void MoonboardClient::setLog(BasicLog *_log) {
-    m_log = _log;
-}

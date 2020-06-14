@@ -19,8 +19,6 @@ class PanelClient {
 protected:
     WiFiClient m_client;
     BasicLog *m_log;
-    IPAddress m_hostIP;
-    uint16_t m_port;
     int m_cmdId = 1;
     int m_rcvLen = 0;
     char rcvdBuf[PANEL_RCVBUF_LEN];
@@ -29,18 +27,16 @@ protected:
 public:
     PanelClient(){};
     void begin(BasicLog *_log);
-    void setAddress(const char *host, uint16_t port);
-    void setAddress(IPAddress host, uint16_t port);
-    int connect();
     void stop();
     bool sendCommand(const char *cmd, const char *data = NULL);
     void clearBoard();
     void lightHolds(const char *holdList);
     bool waitForAck(int cmdId);
     int receiveLine(uint16_t timeout);
-    BasicLog *getLog();
-    void setLog(BasicLog *);
-    Client *getClient();
+    BasicLog *getLog() { return m_log; };
+    void setLog(BasicLog *l) { m_log = l; };
+    WiFiClient getClient() { return m_client; };
+    void setClient(WiFiClient c) { m_client = c; };
 };
 
 #endif // #ifndef _PANEL_CLIENT_H
