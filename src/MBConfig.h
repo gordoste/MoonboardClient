@@ -20,7 +20,9 @@ struct MBConfigData {
 class MBConfig {
 public:
     MBConfigData *read(Stream &in, MBConfigData *dest = NULL);
+    bool readConfig(FS &fs, String fileName, MBConfigData *dest = NULL);
     bool write(Stream &out, MBConfigData *src = NULL);
+    bool writeConfig(FS &fs, const char *fnam, MBConfigData *src = NULL);
     bool writeHumanReadable(Stream &out, MBConfigData *src = NULL);
     bool writeNewConf(Stream &out);
     MBConfigData *fromString(char *str, MBConfigData *dest = NULL);

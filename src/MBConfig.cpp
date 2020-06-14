@@ -109,6 +109,24 @@ bool MBConfig::parseIPAndPort(const char *str, IPAddress &dstIP, uint16_t &dstPo
     return true;
 }
 
+bool MBConfig::readConfig(FS &fs, String fileName, MBConfigData *dest) {
+    File cfgFile = fs.open(fileName);
+    MBConfigData *_result = NULL;
+    if (cfgFile) {
+        _result = MoonboardConf.read(cfgFile, dest);
+        cfgFile.close();
+    }
+    return (_result != NULL);
+}
+
+bool MBConfig::writeConfig(FS &fs, const char *fnam, MBConfigData *src) {
+    File cfgFile = fs.open(fnam, "w");
+    if (!cfgFile) return false;
+    bool _res = MoonboardConf.write(cfgFile, src);
+    cfgFile.close();
+    return _res;
+}
+
 #if !defined(NO_GLOBAL_INSTANCES) && !defined(NO_GLOBAL_MBCONFIG)
 MBConfig MoonboardConf;
 #endif
