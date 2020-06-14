@@ -1,8 +1,7 @@
 #include "MoonboardClient.h"
 
-void MoonboardClient::begin(BasicLog *_log, MBConfigData *_config) {
+void MoonboardClient::begin(BasicLog *_log) {
     m_log = _log;
-    m_config = _config;
     m_btmPnl.begin(_log);
     m_midPnl.begin(_log);
     m_topPnl.begin(_log);
