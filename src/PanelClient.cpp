@@ -10,20 +10,21 @@ void PanelClient::stop() {
 }
 
 bool PanelClient::sendCommand(const char *cmd, const char *data) {
-    m_log->debug2("sendCommand(%s %d %s)", cmd, m_cmdId, data ? data : "");
+    m_log->debug2("sendCommand #%d (%s %s)", m_cmdId, cmd, data ? data : "");
     sprintf(sendBuf, "%s %d", cmd, m_cmdId);
-    m_log->debug("write:%s", sendBuf);
+    m_log->debug3("write:%s", sendBuf);
     m_client.write(sendBuf);
     if (data != NULL) {
         sprintf(sendBuf, " %s", data);
-        m_log->debug("write:%s", sendBuf);
+        m_log->debug3("write:%s", sendBuf);
         m_client.write(sendBuf);
     }
     m_client.write('\n');
     if (!waitForAck(m_cmdId)) {
-        m_log->debug("sendCommand failed");
+        m_log->debug("ack #%d FAIL", m_cmdId);
         return false;
     }
+    m_log->debug2("ack #%d OK", m_cmdId);
     m_cmdId++;
     return true;
 };
@@ -82,6 +83,7 @@ int PanelClient::receiveLine(uint32_t timeout) {
         } else {
             delay(500);
         }
+        m_log->debug3("%li %li", millis(), expiryTime);
     }
     rcvdBuf[m_rcvLen] = '\0';
     return m_rcvLen;
