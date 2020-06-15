@@ -60,11 +60,11 @@ bool PanelClient::waitForAck(int cmdId) {
     }
 };
 
-int PanelClient::receiveLine(uint16_t timeout) {
+int PanelClient::receiveLine(uint32_t timeout) {
     if (m_rcvLen == 0) {
         memset(rcvdBuf, 0, PANEL_RCVBUF_LEN);
     }
-    uint16_t expiryTime = millis() + timeout;
+    uint32_t expiryTime = millis() + timeout;
     while (m_client.connected() && millis() < expiryTime) {
         char c;
         if (m_client.available()) {

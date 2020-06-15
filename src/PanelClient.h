@@ -32,7 +32,7 @@ public:
     void clearBoard();
     void lightHolds(const char *holdList);
     bool waitForAck(int cmdId);
-    int receiveLine(uint16_t timeout);
+    int receiveLine(uint32_t timeout);
     BasicLog *getLog() { return m_log; };
     void setLog(BasicLog *l) { m_log = l; };
     WiFiClient getClient() { return m_client; };
