@@ -35,6 +35,7 @@ public:
     PanelClient(){};
     void begin(BasicLog *_log, uint32_t ackTimeout_ms = 60000);
     void stop();
+    bool connected();
 
     int clear(bool blocking = true);
     int lightHolds(const char *holdList, bool blocking = true);

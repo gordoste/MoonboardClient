@@ -6,8 +6,11 @@ void PanelClient::begin(BasicLog *_log, uint32_t ackTimeout_ms) {
 }
 
 void PanelClient::stop() {
-    if (!m_client.connected()) return;
     m_client.stop();
+}
+
+bool PanelClient::connected() {
+    return m_client && m_client.connected();
 }
 
 // Returns ID of command sent, 0 on failure
@@ -106,7 +109,6 @@ int PanelClient::receiveLine(uint32_t timeout) {
 
 // Use with non-blocking sendCommand() - call in a loop to check for ACKs
 void PanelClient::receive() {
-    if (!m_client.connected()) return;
     if (m_rcvLen == 0) memset(rcvdBuf, 0, PANEL_RCVBUF_LEN);
     char c;
     while (m_client.available()) {
