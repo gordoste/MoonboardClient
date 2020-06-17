@@ -11,30 +11,18 @@ void MoonboardClient::begin(BasicLog *_log) {
 
 void MoonboardClient::showProblem(Problem *p) {
     if (!isConnected()) return;
-    clearBoard();
-    int btmCmd = m_btmPnl.lightHolds(p->bottomHolds, false);
-    int midCmd = m_midPnl.lightHolds(p->middleHolds, false);
-    int topCmd = m_topPnl.lightHolds(p->topHolds, false);
-    while (btmCmd != 0 || midCmd != 0 || topCmd != 0) {
-        if (btmCmd != 0) {
-            m_btmPnl.receive();
-            if (!m_btmPnl.hasAckPending(btmCmd)) btmCmd = 0;
-        }
-        if (midCmd != 0) {
-            m_midPnl.receive();
-            if (!m_midPnl.hasAckPending(midCmd)) midCmd = 0;
-        }
-        if (topCmd != 0) {
-            m_topPnl.receive();
-            if (!m_topPnl.hasAckPending(topCmd)) topCmd = 0;
-        }
-    }
+    clear();
+    m_btmCmdId = m_btmPnl.lightHolds(p->bottomHolds, false);
+    m_midCmdId = m_midPnl.lightHolds(p->middleHolds, false);
+    m_topCmdId = m_topPnl.lightHolds(p->topHolds, false);
+    waitForPendingCmds();
 }
 
-void MoonboardClient::clearBoard() {
-    m_btmPnl.clear();
-    m_midPnl.clear();
-    m_topPnl.clear();
+void MoonboardClient::clear() {
+    m_btmCmdId = m_btmPnl.clear(false);
+    m_midCmdId = m_midPnl.clear(false);
+    m_topCmdId = m_topPnl.clear(false);
+    waitForPendingCmds();
 }
 
 void MoonboardClient::stop() {
@@ -45,9 +33,14 @@ void MoonboardClient::stop() {
 }
 
 bool MoonboardClient::isConnected() {
-    return (m_btmPnl.getClient() && m_btmPnl.getClient().connected()) &&
-           (m_midPnl.getClient() && m_midPnl.getClient().connected()) &&
-           (m_topPnl.getClient() && m_topPnl.getClient().connected());
+    return m_btmPnl.connected() && m_midPnl.connected() && m_topPnl.connected();
+}
+
+void MoonboardClient::ping() {
+    m_btmCmdId = m_btmPnl.ping(false);
+    m_midCmdId = m_midPnl.ping(false);
+    m_topCmdId = m_topPnl.ping(false);
+    waitForPendingCmds(); 
 }
 
 bool MoonboardClient::registerClient(const char *id, WiFiClient _conn) {
@@ -66,12 +59,30 @@ bool MoonboardClient::registerClient(const char *id, WiFiClient _conn) {
     return false;
 }
 
+void MoonboardClient::waitForPendingCmds() {
+    while (m_btmCmdId != 0 || m_midCmdId != 0 || m_topCmdId != 0) {
+        if (m_btmCmdId != 0) {
+            m_btmPnl.receive();
+            if (!m_btmPnl.hasAckPending(m_btmCmdId)) m_btmCmdId = 0;
+        }
+        if (m_midCmdId != 0) {
+            m_midPnl.receive();
+            if (!m_midPnl.hasAckPending(m_midCmdId)) m_midCmdId = 0;
+        }
+        if (m_topCmdId != 0) {
+            m_topPnl.receive();
+            if (!m_topPnl.hasAckPending(m_topCmdId)) m_topCmdId = 0;
+        }
+    }
+}
+
 #else // #ifdef MOONBOARD_DISABLED
 
 void MoonboardClient::showProblem(Problem *p) { return; }
-void MoonboardClient::clearBoard() { return; }
+void MoonboardClient::clear() { return; }
 void MoonboardClient::stop() { return; }
+bool MoonboardClient::ping() { }
 bool MoonboardClient::isConnected() { return true; }
 bool MoonboardClient::registerClient(const char *id, WiFiClient _conn) { return true; }
-
+void MoonboardClient::waitForPendingCmds() { }
 #endif
