@@ -12,15 +12,29 @@ void MoonboardClient::begin(BasicLog *_log) {
 void MoonboardClient::showProblem(Problem *p) {
     if (!isConnected()) return;
     clearBoard();
-    m_btmPnl.lightHolds(p->bottomHolds);
-    m_midPnl.lightHolds(p->middleHolds);
-    m_topPnl.lightHolds(p->topHolds);
+    int btmCmd = m_btmPnl.lightHolds(p->bottomHolds, false);
+    int midCmd = m_midPnl.lightHolds(p->middleHolds, false);
+    int topCmd = m_topPnl.lightHolds(p->topHolds, false);
+    while (btmCmd != 0 || midCmd != 0 || topCmd != 0) {
+        if (btmCmd != 0) {
+            m_btmPnl.receive();
+            if (!m_btmPnl.hasAckPending(btmCmd)) btmCmd = 0;
+        }
+        if (midCmd != 0) {
+            m_midPnl.receive();
+            if (!m_midPnl.hasAckPending(midCmd)) midCmd = 0;
+        }
+        if (topCmd != 0) {
+            m_topPnl.receive();
+            if (!m_topPnl.hasAckPending(topCmd)) topCmd = 0;
+        }
+    }
 }
 
 void MoonboardClient::clearBoard() {
-    m_btmPnl.clearBoard();
-    m_midPnl.clearBoard();
-    m_topPnl.clearBoard();
+    m_btmPnl.clear();
+    m_midPnl.clear();
+    m_topPnl.clear();
 }
 
 void MoonboardClient::stop() {
