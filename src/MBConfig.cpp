@@ -1,7 +1,6 @@
 #include "MBConfig.h"
 
-MBConfigData *MBConfig::read(Stream &in, MBConfigData *dest) {
-    if (dest == NULL) dest = &m_data;
+MBConfigData *MBConfig::readImpl(Stream &in, MBConfigData *dest) {
     if (!dest->top_panel_ip.fromString(in.readStringUntil(':'))) return NULL;
     dest->top_port = atoi(in.readStringUntil('|').c_str());
     if (!dest->mid_panel_ip.fromString(in.readStringUntil(':'))) return NULL;
@@ -12,8 +11,7 @@ MBConfigData *MBConfig::read(Stream &in, MBConfigData *dest) {
     return dest;
 }
 
-bool MBConfig::write(Stream &out, MBConfigData *src) {
-    if (src == NULL) src = &m_data;
+bool MBConfig::writeImpl(Stream &out, MBConfigData *src) {
     return out.printf("%s:%i|%s:%i|%s:%i|%i|",
                       src->top_panel_ip.toString().c_str(),
                       src->top_port,
@@ -34,34 +32,6 @@ bool MBConfig::writeHumanReadable(Stream &out, MBConfigData *src) {
                       src->btm_panel_ip.toString().c_str(),
                       src->btm_port,
                       src->flags) > 0;
-}
-
-bool MBConfig::writeNewConf(Stream &out) {
-    return out.println("0.0.0.0:1|0.0.0.0:1|0.0.0.0:1|1|");
-}
-
-MBConfigData *MBConfig::fromString(char *str, MBConfigData *dest) {
-    if (dest == NULL) dest = &m_data;
-    char *tokptr = NULL;
-    tokptr = strtok(str, ":");
-    if (tokptr == NULL || !dest->top_panel_ip.fromString(tokptr)) return NULL;
-    tokptr = strtok(str, "|");
-    if (tokptr == NULL) return NULL;
-    dest->top_port = atoi(tokptr);
-    tokptr = strtok(str, ":");
-    if (tokptr == NULL || !dest->mid_panel_ip.fromString(tokptr)) return NULL;
-    tokptr = strtok(str, "|");
-    if (tokptr == NULL) return NULL;
-    dest->mid_port = atoi(tokptr);
-    tokptr = strtok(str, ":");
-    if (tokptr == NULL || !dest->btm_panel_ip.fromString(tokptr)) return NULL;
-    tokptr = strtok(str, "|");
-    if (tokptr == NULL) return NULL;
-    dest->btm_port = atoi(tokptr);
-    tokptr = strtok(str, "|");
-    if (tokptr == NULL) return NULL;
-    dest->flags = atoi(tokptr);
-    return dest;
 }
 
 void MBConfig::setFlags(bool testMode, MBConfigData *dest) {
@@ -107,24 +77,6 @@ bool MBConfig::parseIPAndPort(const char *str, IPAddress &dstIP, uint16_t &dstPo
     dstIP = newAddr;
     dstPort = newport;
     return true;
-}
-
-bool MBConfig::readConfig(FS &fs, String fileName, MBConfigData *dest) {
-    File cfgFile = fs.open(fileName);
-    MBConfigData *_result = NULL;
-    if (cfgFile) {
-        _result = MoonboardConf.read(cfgFile, dest);
-        cfgFile.close();
-    }
-    return (_result != NULL);
-}
-
-bool MBConfig::writeConfig(FS &fs, const char *fnam, MBConfigData *src) {
-    File cfgFile = fs.open(fnam, "w");
-    if (!cfgFile) return false;
-    bool _res = MoonboardConf.write(cfgFile, src);
-    cfgFile.close();
-    return _res;
 }
 
 #if !defined(NO_GLOBAL_INSTANCES) && !defined(NO_GLOBAL_MBCONFIG)
