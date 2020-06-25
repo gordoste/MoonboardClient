@@ -8,8 +8,7 @@ void MoonboardUtils::begin(char *buf, uint16_t bufLen, FS *fs, Print *stdErr) {
     m_fs = fs;
     findCustomLists();
     m_probListMem.probParser = ([this](Problem *p, char *str) -> bool { return parseProblem(p, str); });
-    m_filtList.begin(buf, bufLen, fs, stdErr, &m_probListMem);
-    m_custList.begin(buf, bufLen, fs, stdErr, &m_probListMem);
+    m_list.begin(buf, bufLen, fs, stdErr, &m_probListMem);
 }
 
 void MoonboardUtils::setStdErr(Print *stdErr) {
@@ -249,8 +248,8 @@ bool MoonboardUtils::openFilteredList(const char *listName, const char *sortOrde
         m_probList = NULL;
     }
     if (sortOrder == NULL || listName == NULL) return false;
-    if (!m_filtList.open(listName, sortOrder)) return false;
-    m_probList = &m_filtList;
+    if (!m_list.open(ListType::LIST_FILTER, listName, sortOrder)) return false;
+    m_probList = &m_list;
     return true;
 }
 
@@ -487,9 +486,9 @@ bool MoonboardUtils::openCustomList(uint8_t z_listNum) {
         m_probList = NULL;
     }
     if (z_listNum >= m_numCustomLists) return false;
-    if (m_custList.open(m_customListNames[z_listNum], "name")) {
+    if (m_list.open(ListType::LIST_CUSTOM, m_customListNames[z_listNum], "name")) {
         m_selectedCustomList = z_listNum;
-        m_probList = &m_custList;
+        m_probList = &m_list;
         return true;
     }
     return false;

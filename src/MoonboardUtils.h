@@ -2,8 +2,7 @@
 #define _MOONBOARD_UTILS_H
 
 #include "Data.h"
-#include "MBCustomList.h"
-#include "MBFilteredList.h"
+#include "MBList.h"
 #include "StringUtils.h"
 #include <FS.h>
 
@@ -85,8 +84,7 @@ private:
     SortOrder m_sortOrders[MAX_SORT_ORDERS]; // Storage for sort order names
     uint8_t m_numSortOrders = 0;
 
-    MBFilteredList m_filtList = MBFilteredList();
-    MBCustomList m_custList = MBCustomList();
+    MBList m_list = MBList();
 
     MBList *m_probList;
     MBListMem m_probListMem = MBListMem();

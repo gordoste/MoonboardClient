@@ -17,10 +17,15 @@ struct MBListMem {
     std::vector<uint32_t> pageOffsets = std::vector<uint32_t>();
 };
 
+enum ListType {
+    LIST_CUSTOM,
+    LIST_FILTER
+};
+
 class MBList {
 public:
     void begin(char *buf, uint16_t bufLen, FS *FS, Print *stdErr, MBListMem *mem);
-    virtual bool open(const char *listName, const char *sortOrder) = 0;
+    virtual bool open(ListType type, const char *listName, const char *sortOrder);
     void close();
     bool readNextProblem(Problem *p);
     uint8_t readNextProblems(Problem pArr[], uint8_t max);
@@ -34,7 +39,7 @@ public:
     uint8_t readPage(Problem pArr[], uint16_t pageNum);
 
 protected:
-    virtual bool seekPage(uint16_t pageNum) = 0;
+    virtual bool seekPage(uint16_t pageNum);
     FS *m_fs;
     Print *m_stdErr;
     char *m_buf;
