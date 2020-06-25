@@ -7,8 +7,8 @@ void MoonboardUtils::begin(char *buf, uint16_t bufLen, FS *fs, Print *stdErr) {
     m_stdErr = stdErr;
     m_fs = fs;
     findCustomLists();
-    m_probListMem.probParser = ([this](Problem *p, char *str) -> bool { return parseProblem(p, str); });
-    m_list.begin(buf, bufLen, fs, stdErr, &m_probListMem);
+    m_list.begin(buf, bufLen, fs, stdErr);
+    m_list.setProblemParser(parseProblem);
 }
 
 void MoonboardUtils::setStdErr(Print *stdErr) {
@@ -243,13 +243,9 @@ SortOrder *MoonboardUtils::getSortOrderByName(const char *sortOrderName) {
 
 // Opens the specified list using the specified sort order (NULL for sortOrder means order will be as it is read from the file)
 bool MoonboardUtils::openFilteredList(const char *listName, const char *sortOrder) {
-    if (m_probList != NULL) {
-        m_probList->close();
-        m_probList = NULL;
-    }
+    if (m_list.isOpen()) m_list.close();
     if (sortOrder == NULL || listName == NULL) return false;
     if (!m_list.open(ListType::LIST_FILTER, listName, sortOrder)) return false;
-    m_probList = &m_list;
     return true;
 }
 
@@ -260,53 +256,52 @@ bool MoonboardUtils::openSelectedFilteredList(const char *sortOrder) {
 
 // read the string, placing data in the problem struct passed. Return true on success
 bool MoonboardUtils::parseProblem(Problem *prob, char *in) {
-    strcpy(t_strtok, "|"); // need room for null terminator
-    char *_t_ptr_char = StringUtils::strtoke(in, t_strtok);
+    char *_t_ptr_char = StringUtils::strtoke(in, "|");
     if (_t_ptr_char == NULL) {
         return false;
     }
     if (strlen(_t_ptr_char) > MAX_PROBLEMNAME_LEN) {
-        m_stdErr->printf("MBU::pP - n '%s' too long (%d)\n", _t_ptr_char, strlen(_t_ptr_char));
+        // m_stdErr->printf("MBU::pP - n '%s' too long (%d)\n", _t_ptr_char, strlen(_t_ptr_char));
         return false;
     }
     strcpy(prob->name, _t_ptr_char);
-    _t_ptr_char = StringUtils::strtoke(NULL, t_strtok);
+    _t_ptr_char = StringUtils::strtoke(NULL, "|");
     if (_t_ptr_char == NULL) {
-        m_stdErr->printf("MBU::pP - '%s' no grade\n", prob->name);
+        // m_stdErr->printf("MBU::pP - '%s' no grade\n", prob->name);
         return false;
     }
     if (_t_ptr_char[0] != 'V') {
-        m_stdErr->printf("MBU::pP - '%s' no V\n", prob->name);
+        // m_stdErr->printf("MBU::pP - '%s' no V\n", prob->name);
         return false;
     }
     prob->grade = atoi(&(_t_ptr_char[1]));
     if (prob->grade == 0) {
-        m_stdErr->printf("MBU::pP - '%s' bad grade\n", prob->name);
+        // m_stdErr->printf("MBU::pP - '%s' bad grade\n", prob->name);
         return false;
     }
-    _t_ptr_char = StringUtils::strtoke(NULL, t_strtok);
+    _t_ptr_char = StringUtils::strtoke(NULL, "|");
     if (_t_ptr_char == NULL) {
-        m_stdErr->printf("MBU::pP - '%s' no rating\n", prob->name);
+        // m_stdErr->printf("MBU::pP - '%s' no rating\n", prob->name);
         return false;
     }
     prob->rating = atoi(_t_ptr_char);
     if (prob->rating == 0) {
-        m_stdErr->printf("MBU::pP - '%s' bad rating\n", prob->name);
+        // m_stdErr->printf("MBU::pP - '%s' bad rating\n", prob->name);
         return false;
     }
-    _t_ptr_char = StringUtils::strtoke(NULL, t_strtok);
+    _t_ptr_char = StringUtils::strtoke(NULL, "|");
     if (_t_ptr_char == NULL) {
-        m_stdErr->printf("MBU::pP - '%s' no repeats\n", prob->name);
+        // m_stdErr->printf("MBU::pP - '%s' no repeats\n", prob->name);
         return false;
     }
     prob->repeats = atoi(_t_ptr_char);
     if (prob->repeats == 0 && (_t_ptr_char[0] != '0' || _t_ptr_char[1] != '\0')) {
-        m_stdErr->printf("MBU::pP - '%s' NaN repeats\n", prob->name);
+        // m_stdErr->printf("MBU::pP - '%s' NaN repeats\n", prob->name);
         return false;
     }
-    _t_ptr_char = StringUtils::strtoke(NULL, t_strtok);
+    _t_ptr_char = StringUtils::strtoke(NULL, "|");
     if (_t_ptr_char == NULL) {
-        m_stdErr->printf("MBU::pP - '%s' no BM\n", prob->name);
+        // m_stdErr->printf("MBU::pP - '%s' no BM\n", prob->name);
         return false;
     }
     switch (_t_ptr_char[0]) {
@@ -319,33 +314,33 @@ bool MoonboardUtils::parseProblem(Problem *prob, char *in) {
     default:
         return false;
     }
-    _t_ptr_char = StringUtils::strtoke(NULL, t_strtok);
+    _t_ptr_char = StringUtils::strtoke(NULL, "|");
     if (_t_ptr_char == NULL) {
-        m_stdErr->printf("MBU::pP - '%s' no BH\n", prob->name);
+        // m_stdErr->printf("MBU::pP - '%s' no BH\n", prob->name);
         return false;
     }
     if (strlen(_t_ptr_char) > MAX_HOLDS_PER_PANEL * 3) {
-        m_stdErr->printf("MBU::pP - bH '%s' too long\n", _t_ptr_char);
+        // m_stdErr->printf("MBU::pP - bH '%s' too long\n", _t_ptr_char);
         return false;
     }
     strcpy(prob->bottomHolds, _t_ptr_char);
-    _t_ptr_char = StringUtils::strtoke(NULL, t_strtok);
+    _t_ptr_char = StringUtils::strtoke(NULL, "|");
     if (_t_ptr_char == NULL) {
-        m_stdErr->printf("MBU::pP - '%s' no MH\n", prob->name);
+        // m_stdErr->printf("MBU::pP - '%s' no MH\n", prob->name);
         return false;
     }
     if (strlen(_t_ptr_char) > MAX_HOLDS_PER_PANEL * 3) {
-        m_stdErr->printf("MBU::pP - mH '%s' too long\n", _t_ptr_char);
+        // m_stdErr->printf("MBU::pP - mH '%s' too long\n", _t_ptr_char);
         return false;
     }
     strcpy(prob->middleHolds, _t_ptr_char);
-    _t_ptr_char = StringUtils::strtoke(NULL, t_strtok);
+    _t_ptr_char = StringUtils::strtoke(NULL, "|");
     if (_t_ptr_char == NULL) {
-        m_stdErr->printf("MBU::pP - '%s' no TH\n", prob->name);
+        // m_stdErr->printf("MBU::pP - '%s' no TH\n", prob->name);
         return false;
     }
     if (strlen(_t_ptr_char) > MAX_HOLDS_PER_PANEL * 3) {
-        m_stdErr->printf("MBU::pP - tH '%s' too long\n", _t_ptr_char);
+        // m_stdErr->printf("MBU::pP - tH '%s' too long\n", _t_ptr_char);
         return false;
     }
     strcpy(prob->topHolds, _t_ptr_char);
@@ -481,14 +476,10 @@ void MoonboardUtils::checkFileIsCustomList(const char *fileName) {
 }
 
 bool MoonboardUtils::openCustomList(uint8_t z_listNum) {
-    if (m_probList != NULL) {
-        m_probList->close();
-        m_probList = NULL;
-    }
+    if (m_list.isOpen()) m_list.close();
     if (z_listNum >= m_numCustomLists) return false;
     if (m_list.open(ListType::LIST_CUSTOM, m_customListNames[z_listNum], "name")) {
         m_selectedCustomList = z_listNum;
-        m_probList = &m_list;
         return true;
     }
     return false;

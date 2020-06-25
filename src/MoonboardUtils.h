@@ -56,10 +56,10 @@ public:
     char *catNumToName(int8_t z_catType, int8_t z_catNum);
     int8_t catNameToNum(int8_t z_catType, const char *catName);
 
-    MBList *getList() { return m_probList; }
-    bool listIsOpen() { return m_probList != NULL; }
+    MBList *getList() { return &m_list; }
+    bool listIsOpen() { return m_list.isOpen(); }
 
-    bool parseProblem(Problem *p, char *in);
+    static bool parseProblem(Problem *p, char *in);
     void printProblem(Problem *p, Print *out);
 
     void showCatType(Print *outStr, CategoryType *ptrCT);
@@ -86,8 +86,6 @@ private:
 
     MBList m_list = MBList();
 
-    MBList *m_probList;
-    MBListMem m_probListMem = MBListMem();
     FS *m_fs;
     Print *m_stdErr;
     char *m_buf;
