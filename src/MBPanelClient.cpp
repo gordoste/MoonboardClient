@@ -1,20 +1,20 @@
-#include "PanelClient.h"
+#include "MBPanelClient.h"
 
-void PanelClient::begin(BasicLog *_log, uint32_t ackTimeout_ms) {
+void MBPanelClient::begin(BasicLog *_log, uint32_t ackTimeout_ms) {
     m_log = _log;
     m_ackTimeout = ackTimeout_ms;
 }
 
-void PanelClient::stop() {
+void MBPanelClient::stop() {
     m_client.stop();
 }
 
-bool PanelClient::connected() {
+bool MBPanelClient::connected() {
     return m_client && m_client.connected();
 }
 
 // Returns ID of command sent, 0 on failure
-int PanelClient::sendCommand(const char *cmd, const char *data, bool blocking) {
+int MBPanelClient::sendCommand(const char *cmd, const char *data, bool blocking) {
     m_log->debug2("sendCommand #%d (%s %s)", m_cmdId, cmd, data ? data : "");
     sprintf(sendBuf, "%s %d", cmd, m_cmdId);
     m_log->debug3("write:%s", sendBuf);
@@ -33,27 +33,27 @@ int PanelClient::sendCommand(const char *cmd, const char *data, bool blocking) {
 };
 
 // Returns ID of command sent, 0 on failure
-int PanelClient::clear(bool blocking) {
+int MBPanelClient::clear(bool blocking) {
     return sendCommand("CLR", NULL, blocking);
 };
 
 // Returns ID of command sent, 0 on failure
-int PanelClient::lightHolds(const char *holdList, bool blocking) {
+int MBPanelClient::lightHolds(const char *holdList, bool blocking) {
     return sendCommand("SET", holdList, blocking);
 };
 
 // Returns ID of command sent, 0 on failure
-int PanelClient::reset(bool blocking) {
+int MBPanelClient::reset(bool blocking) {
     return sendCommand("RST", NULL, blocking);
 }
 
 // Returns ID of command sent, 0 on failure
-int PanelClient::ping(bool blocking) {
+int MBPanelClient::ping(bool blocking) {
     return sendCommand("PING", NULL, blocking);
 }
 
 // Blocking call which waits for ACK with specified ID to be received
-bool PanelClient::waitForAck(int cmdId) {
+bool MBPanelClient::waitForAck(int cmdId) {
     m_log->debug2("waitForAck(%d)", cmdId);
     while (true) {
         if (receiveLine(PANEL_RCV_TIMEOUT * 1000) == 0) {
@@ -79,7 +79,7 @@ bool PanelClient::waitForAck(int cmdId) {
 };
 
 // Blocking call which waits for a line to be received
-int PanelClient::receiveLine(uint32_t timeout) {
+int MBPanelClient::receiveLine(uint32_t timeout) {
     if (m_rcvLen == 0) {
         memset(rcvdBuf, 0, PANEL_RCVBUF_LEN);
     }
@@ -108,7 +108,7 @@ int PanelClient::receiveLine(uint32_t timeout) {
 };
 
 // Use with non-blocking sendCommand() - call in a loop to check for ACKs
-void PanelClient::receive() {
+void MBPanelClient::receive() {
     if (m_rcvLen == 0) memset(rcvdBuf, 0, PANEL_RCVBUF_LEN);
     char c;
     while (m_client.available()) {
@@ -137,7 +137,7 @@ void PanelClient::receive() {
     }
 }
 
-bool PanelClient::hasAckPending(int _cmdId) {
+bool MBPanelClient::hasAckPending(int _cmdId) {
     uint32_t now = millis();
     // Time out ACKs - they will be in order of receipt
     for (auto it = m_pendingAcks.begin(); it != m_pendingAcks.end() && now > ((*it).timeReceived + m_ackTimeout); it++) {

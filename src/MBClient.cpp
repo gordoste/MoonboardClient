@@ -1,6 +1,6 @@
-#include "MoonboardClient.h"
+#include "MBClient.h"
 
-void MoonboardClient::begin(BasicLog *_log) {
+void MBClient::begin(BasicLog *_log) {
     m_log = _log;
     m_btmPnl.begin(_log);
     m_midPnl.begin(_log);
@@ -9,7 +9,7 @@ void MoonboardClient::begin(BasicLog *_log) {
 
 #ifndef MOONBOARD_DISABLED
 
-void MoonboardClient::showProblem(Problem *p) {
+void MBClient::showProblem(Problem *p) {
     if (!isConnected()) return;
     clear();
     m_btmCmdId = m_btmPnl.lightHolds(p->bottomHolds, false);
@@ -18,32 +18,32 @@ void MoonboardClient::showProblem(Problem *p) {
     waitForPendingCmds();
 }
 
-void MoonboardClient::clear() {
+void MBClient::clear() {
     m_btmCmdId = m_btmPnl.clear(false);
     m_midCmdId = m_midPnl.clear(false);
     m_topCmdId = m_topPnl.clear(false);
     waitForPendingCmds();
 }
 
-void MoonboardClient::stop() {
+void MBClient::stop() {
     m_btmPnl.stop();
     m_midPnl.stop();
     m_topPnl.stop();
     m_log->log("Disconnected from moonboard");
 }
 
-bool MoonboardClient::isConnected() {
+bool MBClient::isConnected() {
     return m_btmPnl.connected() && m_midPnl.connected() && m_topPnl.connected();
 }
 
-void MoonboardClient::ping() {
+void MBClient::ping() {
     m_btmCmdId = m_btmPnl.ping(false);
     m_midCmdId = m_midPnl.ping(false);
     m_topCmdId = m_topPnl.ping(false);
     waitForPendingCmds(); 
 }
 
-bool MoonboardClient::registerClient(const char *id, WiFiClient _conn) {
+bool MBClient::registerClient(const char *id, WiFiClient _conn) {
     if (strcmp(id, "moonboard_top") == 0) {
         m_topPnl.setClient(_conn);
         return true;
@@ -59,7 +59,7 @@ bool MoonboardClient::registerClient(const char *id, WiFiClient _conn) {
     return false;
 }
 
-void MoonboardClient::waitForPendingCmds() {
+void MBClient::waitForPendingCmds() {
     while (m_btmCmdId != 0 || m_midCmdId != 0 || m_topCmdId != 0) {
         if (m_btmCmdId != 0) {
             m_btmPnl.receive();
@@ -78,11 +78,11 @@ void MoonboardClient::waitForPendingCmds() {
 
 #else // #ifdef MOONBOARD_DISABLED
 
-void MoonboardClient::showProblem(Problem *p) { return; }
-void MoonboardClient::clear() { return; }
-void MoonboardClient::stop() { return; }
-bool MoonboardClient::ping() { }
-bool MoonboardClient::isConnected() { return true; }
-bool MoonboardClient::registerClient(const char *id, WiFiClient _conn) { return true; }
-void MoonboardClient::waitForPendingCmds() { }
+void MBClient::showProblem(Problem *p) { return; }
+void MBClient::clear() { return; }
+void MBClient::stop() { return; }
+bool MBClient::ping() { }
+bool MBClient::isConnected() { return true; }
+bool MBClient::registerClient(const char *id, WiFiClient _conn) { return true; }
+void MBClient::waitForPendingCmds() { }
 #endif

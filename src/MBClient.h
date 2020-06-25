@@ -1,22 +1,22 @@
-#ifndef _MOONBOARD_CLIENT_H
-#define _MOONBOARD_CLIENT_H
+#ifndef _MBCLIENT_H
+#define _MBCLIENT_H
 
-#include "Data.h"
-#include "PanelClient.h"
+#include "MBData.h"
+#include "MBPanelClient.h"
 #include <BasicLog.h>
 
-class MoonboardClient {
+class MBClient {
 protected:
     BasicLog *m_log;
-    PanelClient m_btmPnl;
-    PanelClient m_midPnl;
-    PanelClient m_topPnl;
+    MBPanelClient m_btmPnl;
+    MBPanelClient m_midPnl;
+    MBPanelClient m_topPnl;
     int m_btmCmdId; // IDs of pending commands
     int m_midCmdId;
     int m_topCmdId;
 
 public:
-    MoonboardClient(){};
+    MBClient(){};
     void begin(BasicLog *_log);
     BasicLog *getLog() { return m_log; };
     void setLog(BasicLog *l) { m_log = l; };

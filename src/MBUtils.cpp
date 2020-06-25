@@ -1,7 +1,7 @@
-#include "MoonboardUtils.h"
+#include "MBUtils.h"
 
 // Pass a buffer for working
-void MoonboardUtils::begin(char *buf, uint16_t bufLen, FS *fs, Print *stdErr) {
+void MBUtils::begin(char *buf, uint16_t bufLen, FS *fs, Print *stdErr) {
     m_buf = buf;
     m_bufLen = bufLen;
     m_stdErr = stdErr;
@@ -11,12 +11,12 @@ void MoonboardUtils::begin(char *buf, uint16_t bufLen, FS *fs, Print *stdErr) {
     m_list.setProblemParser(parseProblem);
 }
 
-void MoonboardUtils::setStdErr(Print *stdErr) {
+void MBUtils::setStdErr(Print *stdErr) {
     m_stdErr = stdErr;
 }
 
 // Add a sort order. Format aaa:bbb where aaa is the string used in .lst filenames, bbb is the display name
-SortOrder *MoonboardUtils::addSortOrder(const char *sortOrderStr) {
+SortOrder *MBUtils::addSortOrder(const char *sortOrderStr) {
     if (m_numSortOrders == MAX_SORT_ORDERS) {
         m_stdErr->println(F("MBU::sSO - Hit max #"));
         return NULL;
@@ -41,7 +41,7 @@ SortOrder *MoonboardUtils::addSortOrder(const char *sortOrderStr) {
     return &(m_sortOrders[m_numSortOrders - 1]);
 }
 
-void MoonboardUtils::beginCatType(char *catTypeName, bool wildcardOpt) {
+void MBUtils::beginCatType(char *catTypeName, bool wildcardOpt) {
     if (strlen(catTypeName) > MAX_CATTYPENAME_LEN) {
         m_stdErr->printf("MBU::bCT - '%s' too long\n", catTypeName);
         return;
@@ -54,12 +54,12 @@ void MoonboardUtils::beginCatType(char *catTypeName, bool wildcardOpt) {
     m_catTypes[m_numCatTypes].wildcardOpt = wildcardOpt;
 }
 
-CategoryType *MoonboardUtils::endCatType() {
+CategoryType *MBUtils::endCatType() {
     m_numCatTypes++;
     return &(m_catTypes[m_numCatTypes - 1]);
 }
 
-void MoonboardUtils::addCat(const char *catName) {
+void MBUtils::addCat(const char *catName) {
     uint8_t _t_uint8_t = strlen(catName) + 1; // +1 for null terminator
     if (t_catBufPtr - m_catBuf + _t_uint8_t > sizeof(m_catBuf)) {
         m_stdErr->println(F("MBU::aC - Exhausted catBuf"));
@@ -71,7 +71,7 @@ void MoonboardUtils::addCat(const char *catName) {
 }
 
 // Pass colon-delimited string. First token is cat type name, others are taken as category names
-CategoryType *MoonboardUtils::addCatType(const char *catType, bool wildcardOpt) {
+CategoryType *MBUtils::addCatType(const char *catType, bool wildcardOpt) {
     strcpy(m_buf, catType);
     strcpy(t_strtok, ":");
     char *_t_ptr_char = StringUtils::strtoke(m_buf, t_strtok);
@@ -83,16 +83,16 @@ CategoryType *MoonboardUtils::addCatType(const char *catType, bool wildcardOpt) 
 }
 
 // Get category type by number. Return NULL if it doesn't exist. Good for iterating.
-CategoryType *MoonboardUtils::getCatType(int8_t z_catType) {
+CategoryType *MBUtils::getCatType(int8_t z_catType) {
     return (z_catType < m_numCatTypes ? &(m_catTypes[z_catType]) : NULL);
 }
 
 // Get sort order by number. Return NULL if it doesn't exist. Good for iterating.
-SortOrder *MoonboardUtils::getSortOrder(int8_t z_sortOrder) {
+SortOrder *MBUtils::getSortOrder(int8_t z_sortOrder) {
     return (z_sortOrder < m_numSortOrders ? &(m_sortOrders[z_sortOrder]) : NULL);
 }
 
-void MoonboardUtils::selectCat_ss(const char *catTypeName, const char *catName) {
+void MBUtils::selectCat_ss(const char *catTypeName, const char *catName) {
     uint8_t _t_int8_t = catTypeToNum(catTypeName);
     if (_t_int8_t == -1) {
         m_stdErr->printf("MBU::sC - Bad catType '%s'\n", catTypeName);
@@ -101,7 +101,7 @@ void MoonboardUtils::selectCat_ss(const char *catTypeName, const char *catName) 
     selectCat_is(_t_int8_t, catName);
 }
 
-void MoonboardUtils::selectCat_is(int8_t z_catType, const char *catName) {
+void MBUtils::selectCat_is(int8_t z_catType, const char *catName) {
     uint8_t _t_int8_t = catNameToNum(z_catType, catName);
     if (_t_int8_t == -1) {
         m_stdErr->printf("MBU::sC - Bad cat '%s'\n", catName);
@@ -110,7 +110,7 @@ void MoonboardUtils::selectCat_is(int8_t z_catType, const char *catName) {
     selectCat_ii(z_catType, _t_int8_t);
 }
 
-void MoonboardUtils::selectCat_si(const char *catTypeName, int8_t z_catNum) {
+void MBUtils::selectCat_si(const char *catTypeName, int8_t z_catNum) {
     uint8_t _t_int8_t = catTypeToNum(catTypeName);
     if (_t_int8_t == -1) {
         m_stdErr->printf("MBU::sC - Bad catType '%s'\n", catTypeName);
@@ -119,7 +119,7 @@ void MoonboardUtils::selectCat_si(const char *catTypeName, int8_t z_catNum) {
     selectCat_ii(_t_int8_t, z_catNum);
 }
 
-void MoonboardUtils::selectCat_ii(int8_t z_catType, int8_t z_catNum) {
+void MBUtils::selectCat_ii(int8_t z_catType, int8_t z_catNum) {
     if (z_catType >= m_numCatTypes) {
         m_stdErr->printf("MBU::sC - Bad catType #%d\n", z_catType);
         return;
@@ -132,7 +132,7 @@ void MoonboardUtils::selectCat_ii(int8_t z_catType, int8_t z_catNum) {
     updateStatus();
 }
 
-void MoonboardUtils::unselectCat_s(const char *catTypeName) {
+void MBUtils::unselectCat_s(const char *catTypeName) {
     uint8_t _t_int8_t = catTypeToNum(catTypeName);
     if (_t_int8_t == -1) {
         m_stdErr->printf("MBU::uC - Bad catType '%s'\n", catTypeName);
@@ -141,7 +141,7 @@ void MoonboardUtils::unselectCat_s(const char *catTypeName) {
     unselectCat_i(_t_int8_t);
 }
 
-void MoonboardUtils::unselectCat_i(int8_t z_catType) {
+void MBUtils::unselectCat_i(int8_t z_catType) {
     if (z_catType >= m_numCatTypes) {
         m_stdErr->printf("MBU::uC - Bad catType #%d\n", z_catType);
         return;
@@ -151,7 +151,7 @@ void MoonboardUtils::unselectCat_i(int8_t z_catType) {
 }
 
 // Search for a category type with specified name and return the index. -1 if not found
-int8_t MoonboardUtils::catTypeToNum(const char *catTypeName) {
+int8_t MBUtils::catTypeToNum(const char *catTypeName) {
     for (uint8_t _t_uint8_t = 0; _t_uint8_t < m_numCatTypes; _t_uint8_t++) {
         if (strcmp(catTypeName, m_catTypes[_t_uint8_t].name) == 0) {
             return _t_uint8_t;
@@ -161,7 +161,7 @@ int8_t MoonboardUtils::catTypeToNum(const char *catTypeName) {
 }
 
 // Search for a category name within specified cat type and return the index. -1 if not found
-int8_t MoonboardUtils::catNameToNum(int8_t z_catType, const char *catName) {
+int8_t MBUtils::catNameToNum(int8_t z_catType, const char *catName) {
     if (z_catType >= m_numCatTypes) {
         return -1;
     }
@@ -174,7 +174,7 @@ int8_t MoonboardUtils::catNameToNum(int8_t z_catType, const char *catName) {
 }
 
 // Return the name of the category specified within specified cat type. NULL if invalid param
-char *MoonboardUtils::catNumToName(int8_t z_catType, int8_t z_catNum) {
+char *MBUtils::catNumToName(int8_t z_catType, int8_t z_catNum) {
     if (z_catType >= m_numCatTypes) {
         return NULL;
     }
@@ -185,18 +185,18 @@ char *MoonboardUtils::catNumToName(int8_t z_catType, int8_t z_catNum) {
 }
 
 // Get the name of the selected category for specified cat type. Return NULL if none selected
-char *MoonboardUtils::getSelectedCatName(int8_t z_catType) {
+char *MBUtils::getSelectedCatName(int8_t z_catType) {
     if (z_catType >= m_numCatTypes) {
         return NULL;
     }
     return m_catTypes[z_catType].getSelectedCat();
 }
 
-const char *MoonboardUtils::getSelectedFilteredListName() {
+const char *MBUtils::getSelectedFilteredListName() {
     return m_selectedFiltListName;
 }
 
-void MoonboardUtils::updateStatus() {
+void MBUtils::updateStatus() {
     // Build the list name from the currently category selections
     // For types where no selection is made, the wildcard string is used
     uint8_t copied = 0;
@@ -232,7 +232,7 @@ void MoonboardUtils::updateStatus() {
 }
 
 // Search for a sort order with specified name and return the index. NULL if not found
-SortOrder *MoonboardUtils::getSortOrderByName(const char *sortOrderName) {
+SortOrder *MBUtils::getSortOrderByName(const char *sortOrderName) {
     for (uint8_t _t_uint8_t = 0; _t_uint8_t < m_numSortOrders; _t_uint8_t++) {
         if (strcmp(sortOrderName, m_sortOrders[_t_uint8_t].name) == 0) {
             return &(m_sortOrders[_t_uint8_t]);
@@ -242,7 +242,7 @@ SortOrder *MoonboardUtils::getSortOrderByName(const char *sortOrderName) {
 }
 
 // Opens the specified list using the specified sort order (NULL for sortOrder means order will be as it is read from the file)
-bool MoonboardUtils::openFilteredList(const char *listName, const char *sortOrder) {
+bool MBUtils::openFilteredList(const char *listName, const char *sortOrder) {
     if (m_list.isOpen()) m_list.close();
     if (sortOrder == NULL || listName == NULL) return false;
     if (!m_list.open(ListType::LIST_FILTER, listName, sortOrder)) return false;
@@ -250,12 +250,12 @@ bool MoonboardUtils::openFilteredList(const char *listName, const char *sortOrde
 }
 
 // Opens the list corresponding to the selections made (or not) using the specified sort order
-bool MoonboardUtils::openSelectedFilteredList(const char *sortOrder) {
+bool MBUtils::openSelectedFilteredList(const char *sortOrder) {
     return openFilteredList(m_selectedFiltListName, sortOrder);
 }
 
 // read the string, placing data in the problem struct passed. Return true on success
-bool MoonboardUtils::parseProblem(Problem *prob, char *in) {
+bool MBUtils::parseProblem(Problem *prob, char *in) {
     char *_t_ptr_char = StringUtils::strtoke(in, "|");
     if (_t_ptr_char == NULL) {
         return false;
@@ -347,7 +347,7 @@ bool MoonboardUtils::parseProblem(Problem *prob, char *in) {
     return true;
 }
 
-void MoonboardUtils::printProblem(Problem *p, Print *out) {
+void MBUtils::printProblem(Problem *p, Print *out) {
     strcpy(m_buf, "%XXs %s V%d %5d");
     char t_num[3];
     snprintf(t_num, 3, "%d", MAX_PROBLEMNAME_LEN);
@@ -372,7 +372,7 @@ void MoonboardUtils::printProblem(Problem *p, Print *out) {
     }
 }
 
-void MoonboardUtils::showCatType(Print *outStr, CategoryType *ptrCT) {
+void MBUtils::showCatType(Print *outStr, CategoryType *ptrCT) {
     outStr->printf("%s: ", ptrCT->name);
     for (uint8_t cat_i = 0; cat_i < ptrCT->catCount; cat_i++) {
         if (cat_i == ptrCT->selectedCat) {
@@ -387,7 +387,7 @@ void MoonboardUtils::showCatType(Print *outStr, CategoryType *ptrCT) {
     outStr->println(ptrCT->selectedCat == -1 ? "[*]" : "*");
 }
 
-void MoonboardUtils::showAllCatTypes(Print *outStr) {
+void MBUtils::showAllCatTypes(Print *outStr) {
     CategoryType *ptrCT;
     uint8_t _t_uint8_t = 0;
     while (ptrCT = getCatType(_t_uint8_t++)) {
@@ -395,7 +395,7 @@ void MoonboardUtils::showAllCatTypes(Print *outStr) {
     }
 }
 
-// void MoonboardUtils::showStatus(Print *outStr) {
+// void MBUtils::showStatus(Print *outStr) {
 //     switch (m_listType) {
 //     default:
 //         break;
@@ -421,11 +421,11 @@ void MoonboardUtils::showAllCatTypes(Print *outStr) {
 //     }
 // }
 
-uint8_t MoonboardUtils::getNumCatTypes() { return m_numCatTypes; }
-uint8_t MoonboardUtils::getNumSortOrders() { return m_numSortOrders; }
-uint8_t MoonboardUtils::getNumCustomLists() { return m_numCustomLists; }
+uint8_t MBUtils::getNumCatTypes() { return m_numCatTypes; }
+uint8_t MBUtils::getNumSortOrders() { return m_numSortOrders; }
+uint8_t MBUtils::getNumCustomLists() { return m_numCustomLists; }
 
-uint8_t MoonboardUtils::findCustomLists() {
+uint8_t MBUtils::findCustomLists() {
     m_numCustomLists = 0;
     const char *fnam;
     uint8_t listDirSz = strlen(MB_PROBLIST_DIR);
@@ -465,7 +465,7 @@ uint8_t MoonboardUtils::findCustomLists() {
     return m_numCustomLists;
 }
 
-void MoonboardUtils::checkFileIsCustomList(const char *fileName) {
+void MBUtils::checkFileIsCustomList(const char *fileName) {
     uint8_t _t_uint8_t = strlen(fileName);
     if (strncmp(&(fileName[_t_uint8_t - 4]), ".dat", 4) == 0) {
         strncpy(m_customListNames[m_numCustomLists], &(fileName[m_listDirSz]), _t_uint8_t - 4 - m_listDirSz);
@@ -475,7 +475,7 @@ void MoonboardUtils::checkFileIsCustomList(const char *fileName) {
     }
 }
 
-bool MoonboardUtils::openCustomList(uint8_t z_listNum) {
+bool MBUtils::openCustomList(uint8_t z_listNum) {
     if (m_list.isOpen()) m_list.close();
     if (z_listNum >= m_numCustomLists) return false;
     if (m_list.open(ListType::LIST_CUSTOM, m_customListNames[z_listNum], "name")) {
@@ -485,10 +485,10 @@ bool MoonboardUtils::openCustomList(uint8_t z_listNum) {
     return false;
 }
 
-const char *MoonboardUtils::customListNumToName(uint8_t z_listNum) {
+const char *MBUtils::customListNumToName(uint8_t z_listNum) {
     return z_listNum < m_numCustomLists ? m_customListNames[z_listNum] : NULL;
 }
 
-const char *MoonboardUtils::getSelectedCustomListName() {
+const char *MBUtils::getSelectedCustomListName() {
     return customListNumToName(m_selectedCustomList);
 }

@@ -1,7 +1,7 @@
-#ifndef _MOONBOARD_UTILS_H
-#define _MOONBOARD_UTILS_H
+#ifndef _MBUTILS_H
+#define _MBUTILS_H
 
-#include "Data.h"
+#include "MBData.h"
 #include "MBList.h"
 #include "StringUtils.h"
 #include <FS.h>
@@ -16,7 +16,7 @@
 #define MB_WILDCARD_STRING "Any"
 #endif
 
-class MoonboardUtils {
+class MBUtils {
 public:
     void begin(char *buf, uint16_t bufLen, FS *FS, Print *stdErr);
     void setStdErr(Print *stdErr);
@@ -104,4 +104,4 @@ private:
     char t_strtok[2]; // Token storage for strtok'ing
 };
 
-#endif // #ifndef _MOONBOARD_UTILS_H
+#endif // #ifndef _MBUTILS_H

@@ -1,5 +1,5 @@
-#ifndef _PANEL_CLIENT_H
-#define _PANEL_CLIENT_H
+#ifndef _MBPANELCLIENT_H
+#define _MBPANELCLIENT_H
 
 #if defined(ESP8266)
 #include <ESP8266WiFi.h>
@@ -20,7 +20,7 @@ typedef struct {
     uint32_t timeReceived;
 } ack_t;
 
-class PanelClient {
+class MBPanelClient {
 protected:
     WiFiClient m_client;
     BasicLog *m_log;
@@ -32,7 +32,7 @@ protected:
     std::vector<ack_t> m_pendingAcks;
 
 public:
-    PanelClient(){};
+    MBPanelClient(){};
     void begin(BasicLog *_log, uint32_t ackTimeout_ms = 60000);
     void stop();
     bool connected();
@@ -60,4 +60,4 @@ public:
     void setAckTimeout(uint32_t _ackTimeout_ms) { m_ackTimeout = _ackTimeout_ms; }
 };
 
-#endif // #ifndef _PANEL_CLIENT_H
+#endif // #ifndef _MBPANELCLIENT_H

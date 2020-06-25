@@ -1,8 +1,7 @@
-#ifndef _MOONBOARD_DATA_H
-#define _MOONBOARD_DATA_H
+#ifndef _MBDATA_H
+#define _MBDATA_H
 
 #include <Arduino.h>
-#include <list>
 
 #define MAX_CATTYPENAME_LEN 9
 #define MAX_CATS_PER_CATTYPE 5
@@ -53,4 +52,4 @@ struct SortOrder {
 
 int8_t problemAsString(Problem *p, char *buf, size_t bufLen);
 
-#endif // #ifndef _MOONBOARD_DATA_H
+#endif // #ifndef _MBDATA_H
