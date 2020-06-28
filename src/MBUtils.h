@@ -59,6 +59,8 @@ public:
     MBList *getList() { return &m_list; }
     bool listIsOpen() { return m_list.isOpen(); }
 
+    bool addProblem(const Problem *p, const char *listName, const std::vector<SortOrder *> *sortOrders);
+
     void showCatType(Print *outStr, CategoryType *ptrCT);
     void showAllCatTypes(Print *outStr);
     // void showStatus(Print *outStr);

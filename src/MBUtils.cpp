@@ -373,3 +373,138 @@ const char *MBUtils::customListNumToName(uint8_t z_listNum) {
 const char *MBUtils::getSelectedCustomListName() {
     return customListNumToName(m_selectedCustomList);
 }
+
+// Add the specified problem to a custom list. Involves rewriting the list files that have problems sorted
+bool MBUtils::addProblem(const Problem *p, const char *listName, const std::vector<SortOrder *> *sortOrders) {
+    Problem tmpProblem;
+    // Add the problem at the bottom of the data file. Note the offset of the problem
+    if (!MBData::dataFileNameToBuf(LIST_CUSTOM, listName, m_tmpBuf, m_tmpBufLen)) return false;
+    File oldDataFile = m_fs->open(m_tmpBuf);
+    if (!oldDataFile) return false;
+    File newDataFile = m_fs->open("/__newdata", "w");
+    if (!newDataFile) return false;
+    long int newProbDataPos = 0;
+    for (String s = oldDataFile.readStringUntil('\n'); s.length() > 0; s = oldDataFile.readStringUntil('\n')) {
+        newProbDataPos += newDataFile.print(s+'\n');
+    }
+    writeProblem(p, newDataFile);
+    newDataFile.close();
+    std::vector<uint32_t> oldPageOffsets = std::vector<uint32_t>();
+    // For each sort order ...
+    for (auto soIt = sortOrders->begin(); soIt < sortOrders->end(); soIt++) {
+        uint32_t listBytesWritten = 0;
+        sprintf(m_tmpBuf, "/__newlist_%s", (*soIt)->name);
+        File newListFile = m_fs->open(m_tmpBuf, "w");
+        if (!newListFile) return false;
+        //      - open the list file for that sort order
+        if (!MBData::listFileNameToBuf(LIST_CUSTOM, listName, (*soIt)->name, m_tmpBuf, m_tmpBufLen)) return false;
+        File oldListFile = m_fs->open(m_tmpBuf);
+        if (!oldListFile) return false;
+        //      - add one to first line (# problems)
+        oldListFile.readStringUntil('\n').toCharArray(m_tmpBuf, m_tmpBufLen);
+        long int numProbs = strtol(m_tmpBuf, NULL, 10);
+        if (numProbs <= 0) return false;
+        listBytesWritten += newListFile.printf("%ld\n", numProbs + 1);
+        // Skip through all the problems
+        for (long int l = 0; l < numProbs; l++)
+            oldListFile.readStringUntil('\n');
+        oldPageOffsets.clear();
+        //      - read the last line (page offsets)
+        oldListFile.readStringUntil(':').toCharArray(m_tmpBuf, m_tmpBufLen);
+        while (strlen(m_tmpBuf) > 0) {
+            long int offset = strtol(m_tmpBuf, NULL, 10);
+            if (offset > 0) oldPageOffsets.push_back(offset);
+            oldListFile.readStringUntil(':').toCharArray(m_tmpBuf, m_tmpBufLen);
+        }
+        uint32_t prevPageOffset = 0;
+        bool foundPage = false;
+        std::vector<uint32_t> newPageOffsets;
+        long int probsRead = 0;
+        long int probsWritten = 0;
+        // First, find the page where we need to insert it. We do this by checking the 1st entry in each page
+        // to see if it comes after the new problem. If it does, the new problem belongs on the page before that.
+        //      - for each page offset ...
+        for (auto offsetIter = oldPageOffsets.begin(); offsetIter < oldPageOffsets.end() && !foundPage; offsetIter++) {
+            oldListFile.seek(*offsetIter, SeekSet);
+            //  - ... read the list entry and open data file at that offset
+            if (MBData::readListEntryAndSeekInData(oldListFile, oldDataFile, m_tmpBuf, m_tmpBufLen) == -1) return false;
+            //  - ... examine problem to see if it comes after the new problem in the list
+            oldDataFile.readStringUntil('\n').toCharArray(m_tmpBuf, m_tmpBufLen);
+            if (!parseProblem(&tmpProblem, m_tmpBuf)) return false;
+            if (comesBefore(*soIt, p, &tmpProblem)) {
+                foundPage = true;                                      // Needs to go on the previous page (or possibly as first entry of this one)
+                if (prevPageOffset == 0) prevPageOffset = *offsetIter; // Handle insert before first page
+            } else {
+                //  - ... if not, write the prev page to the list file (unless this is the first page)
+                if (prevPageOffset != 0) {
+                    newPageOffsets.push_back(listBytesWritten);
+                    oldListFile.seek(prevPageOffset, SeekSet);
+                    for (uint8_t i = 0; i < CONST_PAGE_SIZE; i++) { // We know it's a complete page
+                        listBytesWritten += newListFile.println(oldListFile.readStringUntil('\n'));
+                        probsRead++;
+                        probsWritten++;
+                    }
+                }
+                prevPageOffset = *offsetIter;
+            }
+        }
+        // If we never find a page, new prob must go on the last page... which is the one we have in prevPageOffset
+        if (!foundPage) foundPage = true;
+        // Go to start of page which will have the new problem
+        oldListFile.seek(prevPageOffset, SeekSet);
+        bool wroteProblem = false;
+        int dataPos;
+        // Now we just go through the remaining problems...
+        while (probsRead < numProbs) {
+            // Record page offset if it's the start of a new page
+            if (probsWritten % CONST_PAGE_SIZE == 0) newPageOffsets.push_back(listBytesWritten);
+            if (wroteProblem) {
+                // We just need to keep writing the rest of the problems
+                listBytesWritten += newListFile.println(oldListFile.readStringUntil('\n'));
+                probsRead++;
+                probsWritten++;
+            } else {
+                // If we haven't written the new problem, check to see if it's time to write it now
+                dataPos = MBData::readListEntryAndSeekInData(oldListFile, oldDataFile, m_tmpBuf, m_tmpBufLen);
+                if (dataPos == -1) return false;
+                oldDataFile.readStringUntil('\n').toCharArray(m_tmpBuf, m_tmpBufLen);
+                probsRead++;
+                if (!parseProblem(&tmpProblem, m_tmpBuf)) return false;
+                //      - ... check to see if we've gone past the new problem's pos in the sorted list
+                if (comesBefore(*soIt, p, &tmpProblem)) {
+                    // Time to write our problem
+                    listBytesWritten += newListFile.printf("-:%ld\n", newProbDataPos);
+                    probsWritten++;
+                    wroteProblem = true;
+                }
+                listBytesWritten += newListFile.printf("-:%d\n", dataPos);
+                probsWritten++;
+            }
+        }
+        // If we still haven't written the new problem then it must come last
+        if (!wroteProblem) {
+            // Record page offset if it's the start of a new page
+            if (probsWritten % CONST_PAGE_SIZE == 0) newPageOffsets.push_back(listBytesWritten);
+            listBytesWritten += newListFile.printf("-:%ld\n", newProbDataPos);
+            probsWritten++;
+            wroteProblem = true;
+        }
+
+        listBytesWritten += newListFile.printf("%d", newPageOffsets[0]);
+        for (uint8_t i = 1; i < newPageOffsets.size(); i++) {
+            listBytesWritten += newListFile.printf(":%d", newPageOffsets[i]);
+        }
+        listBytesWritten += newListFile.println();
+        newListFile.close();
+    }
+    if (!MBData::dataFileNameToBuf(LIST_CUSTOM, listName, m_tmpBuf, m_tmpBufLen)) return false;
+    m_fs->remove(m_tmpBuf);
+    if (!m_fs->rename("/__newdata", m_tmpBuf)) return false;
+    for (auto soIt = sortOrders->begin(); soIt < sortOrders->end(); soIt++) {
+        snprintf(m_tmpBuf, 40, "/__newlist_%s", (*soIt)->name);
+        if (!MBData::listFileNameToBuf(LIST_CUSTOM, listName, (*soIt)->name, m_tmpBuf+40, m_tmpBufLen-40)) return false;
+        m_fs->remove(m_tmpBuf+40);
+        if (!m_fs->rename(m_tmpBuf, m_tmpBuf+40)) return false;
+    }
+    return true;
+}

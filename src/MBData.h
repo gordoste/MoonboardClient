@@ -1,8 +1,9 @@
 #ifndef _MBDATA_H
 #define _MBDATA_H
 
-#include <Arduino.h>
 #include "StringUtils.h"
+#include <Arduino.h>
+#include "FS.h"
 
 #define MAX_CATTYPENAME_LEN 9
 #define MAX_CATS_PER_CATTYPE 5
@@ -11,7 +12,7 @@
 #define MAX_PROBLEMNAME_LEN 42
 #define MAX_HOLDS_PER_PANEL 10
 
-#define PROB_PAGE_SIZE 8
+#define CONST_PAGE_SIZE 8
 
 // Directory where problem lists are stored
 #ifndef MB_PROBLIST_DIR
@@ -54,5 +55,17 @@ struct SortOrder {
 int8_t problemAsString(Problem *p, char *buf, size_t bufLen);
 bool parseProblem(Problem *p, char *in);
 size_t writeProblem(const Problem *prob, Stream &out);
+bool comesBefore(const SortOrder *so, const Problem *p1, const Problem *p2);
+
+enum ListType {
+    LIST_CUSTOM,
+    LIST_FILTER
+};
+
+namespace MBData {
+bool listFileNameToBuf(ListType type, const char *listName, const char *sortOrder, char *buf, size_t bufLen);
+bool dataFileNameToBuf(ListType type, const char *listName, char *buf, size_t bufLen);
+int readListEntryAndSeekInData(File &_list, File &_data, char *buf, size_t bufLen);
+} // namespace MBData
 
 #endif // #ifndef _MBDATA_H

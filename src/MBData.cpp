@@ -125,3 +125,58 @@ size_t writeProblem(const Problem *prob, Stream &out) {
                prob->bottomHolds, prob->middleHolds, prob->topHolds);
 }
 
+bool MBData::listFileNameToBuf(ListType type, const char *listName, const char *sortOrder, char *buf, size_t bufLen) {
+    switch (type) {
+    case ListType::LIST_FILTER:
+        snprintf(buf, bufLen, "/%s_%s.lst", listName, sortOrder);
+        break;
+    case ListType::LIST_CUSTOM:
+        snprintf(buf, bufLen, "%s/%s_%s.lst", MB_PROBLIST_DIR, listName, sortOrder);
+        break;
+    default:
+        return false;
+    }
+    return true;
+}
+bool MBData::dataFileNameToBuf(ListType type, const char *listName, char *buf, size_t bufLen) {
+    switch (type) {
+    case ListType::LIST_FILTER:
+        snprintf(buf, bufLen, "/%s.dat", listName);
+        break;
+    case ListType::LIST_CUSTOM:
+        snprintf(buf, bufLen, "%s/%s.dat", MB_PROBLIST_DIR, listName);
+        break;
+    default:
+        return false;
+    }
+    return true;
+}
+
+// Return true if p1 comes before p2 in the specified sort order
+bool comesBefore(const SortOrder *so, const Problem *p1, const Problem *p2) {
+    if (strncmp(so->name, "name", 4) == 0) {
+        return strcmp(p1->name, p2->name) >= 0;
+    }
+    if (strncmp(so->name, "rpts", 4) == 0) {
+        return p1->repeats > p2->repeats;
+    }
+    return false;
+}
+
+int MBData::readListEntryAndSeekInData(File &_list, File &_data, char *buf, size_t bufLen) {
+    // Check list is open
+    char *_t_ptr_char;
+    if (!_list) return false;
+    _list.readStringUntil('\n').toCharArray(buf, bufLen);
+    _t_ptr_char = StringUtils::strtoke(buf, ":");
+    if (_t_ptr_char == NULL) {
+        return -1;
+    }
+    _t_ptr_char = StringUtils::strtoke(NULL, ":");
+    if (_t_ptr_char == NULL) {
+        return -1;
+    }
+    int offset = atoi(_t_ptr_char);
+    if (!_data.seek(offset, SeekSet)) return -1;
+    return offset;
+}
