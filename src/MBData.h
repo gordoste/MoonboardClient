@@ -2,6 +2,7 @@
 #define _MBDATA_H
 
 #include <Arduino.h>
+#include "StringUtils.h"
 
 #define MAX_CATTYPENAME_LEN 9
 #define MAX_CATS_PER_CATTYPE 5
@@ -51,5 +52,7 @@ struct SortOrder {
 };
 
 int8_t problemAsString(Problem *p, char *buf, size_t bufLen);
+bool parseProblem(Problem *p, char *in);
+size_t writeProblem(const Problem *prob, Stream &out);
 
 #endif // #ifndef _MBDATA_H

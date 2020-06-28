@@ -25,3 +25,103 @@ int8_t problemAsString(Problem *p, char *buf, size_t bufLen) {
     }
     return strlen(buf);
 }
+
+// read the string, placing data in the problem struct passed. Return true on success
+bool parseProblem(Problem *prob, char *in) {
+    char *_t_ptr_char = StringUtils::strtoke(in, "|");
+    if (_t_ptr_char == NULL) {
+        return false;
+    }
+    if (strlen(_t_ptr_char) > MAX_PROBLEMNAME_LEN) {
+        // m_stdErr->printf("MBU::pP - n '%s' too long (%d)\n", _t_ptr_char, strlen(_t_ptr_char));
+        return false;
+    }
+    strcpy(prob->name, _t_ptr_char);
+    _t_ptr_char = StringUtils::strtoke(NULL, "|");
+    if (_t_ptr_char == NULL) {
+        // m_stdErr->printf("MBU::pP - '%s' no grade\n", prob->name);
+        return false;
+    }
+    if (_t_ptr_char[0] != 'V') {
+        // m_stdErr->printf("MBU::pP - '%s' no V\n", prob->name);
+        return false;
+    }
+    prob->grade = atoi(&(_t_ptr_char[1]));
+    if (prob->grade == 0) {
+        // m_stdErr->printf("MBU::pP - '%s' bad grade\n", prob->name);
+        return false;
+    }
+    _t_ptr_char = StringUtils::strtoke(NULL, "|");
+    if (_t_ptr_char == NULL) {
+        // m_stdErr->printf("MBU::pP - '%s' no rating\n", prob->name);
+        return false;
+    }
+    prob->rating = atoi(_t_ptr_char);
+    if (prob->rating == 0) {
+        // m_stdErr->printf("MBU::pP - '%s' bad rating\n", prob->name);
+        return false;
+    }
+    _t_ptr_char = StringUtils::strtoke(NULL, "|");
+    if (_t_ptr_char == NULL) {
+        // m_stdErr->printf("MBU::pP - '%s' no repeats\n", prob->name);
+        return false;
+    }
+    prob->repeats = atoi(_t_ptr_char);
+    if (prob->repeats == 0 && (_t_ptr_char[0] != '0' || _t_ptr_char[1] != '\0')) {
+        // m_stdErr->printf("MBU::pP - '%s' NaN repeats\n", prob->name);
+        return false;
+    }
+    _t_ptr_char = StringUtils::strtoke(NULL, "|");
+    if (_t_ptr_char == NULL) {
+        // m_stdErr->printf("MBU::pP - '%s' no BM\n", prob->name);
+        return false;
+    }
+    switch (_t_ptr_char[0]) {
+    case 'Y':
+        prob->isBenchmark = true;
+        break;
+    case 'N':
+        prob->isBenchmark = false;
+        break;
+    default:
+        return false;
+    }
+    _t_ptr_char = StringUtils::strtoke(NULL, "|");
+    if (_t_ptr_char == NULL) {
+        // m_stdErr->printf("MBU::pP - '%s' no BH\n", prob->name);
+        return false;
+    }
+    if (strlen(_t_ptr_char) > MAX_HOLDS_PER_PANEL * 3) {
+        // m_stdErr->printf("MBU::pP - bH '%s' too long\n", _t_ptr_char);
+        return false;
+    }
+    strcpy(prob->bottomHolds, _t_ptr_char);
+    _t_ptr_char = StringUtils::strtoke(NULL, "|");
+    if (_t_ptr_char == NULL) {
+        // m_stdErr->printf("MBU::pP - '%s' no MH\n", prob->name);
+        return false;
+    }
+    if (strlen(_t_ptr_char) > MAX_HOLDS_PER_PANEL * 3) {
+        // m_stdErr->printf("MBU::pP - mH '%s' too long\n", _t_ptr_char);
+        return false;
+    }
+    strcpy(prob->middleHolds, _t_ptr_char);
+    _t_ptr_char = StringUtils::strtoke(NULL, "|");
+    if (_t_ptr_char == NULL) {
+        // m_stdErr->printf("MBU::pP - '%s' no TH\n", prob->name);
+        return false;
+    }
+    if (strlen(_t_ptr_char) > MAX_HOLDS_PER_PANEL * 3) {
+        // m_stdErr->printf("MBU::pP - tH '%s' too long\n", _t_ptr_char);
+        return false;
+    }
+    strcpy(prob->topHolds, _t_ptr_char);
+    return true;
+}
+
+size_t writeProblem(const Problem *prob, Stream &out) {
+    return out.printf("%s|V%i|%i|%i|%c|%s|%s|%s\n",
+               prob->name, prob->grade, prob->rating, prob->repeats, prob->isBenchmark ? 'Y' : 'N',
+               prob->bottomHolds, prob->middleHolds, prob->topHolds);
+}
+

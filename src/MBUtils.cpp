@@ -8,7 +8,6 @@ void MBUtils::begin(char *buf, uint16_t bufLen, FS *fs, Print *stdErr) {
     m_fs = fs;
     findCustomLists();
     m_list.begin(buf, bufLen, fs, stdErr);
-    m_list.setProblemParser(parseProblem);
 }
 
 void MBUtils::setStdErr(Print *stdErr) {
@@ -252,124 +251,6 @@ bool MBUtils::openFilteredList(const char *listName, const char *sortOrder) {
 // Opens the list corresponding to the selections made (or not) using the specified sort order
 bool MBUtils::openSelectedFilteredList(const char *sortOrder) {
     return openFilteredList(m_selectedFiltListName, sortOrder);
-}
-
-// read the string, placing data in the problem struct passed. Return true on success
-bool MBUtils::parseProblem(Problem *prob, char *in) {
-    char *_t_ptr_char = StringUtils::strtoke(in, "|");
-    if (_t_ptr_char == NULL) {
-        return false;
-    }
-    if (strlen(_t_ptr_char) > MAX_PROBLEMNAME_LEN) {
-        // m_stdErr->printf("MBU::pP - n '%s' too long (%d)\n", _t_ptr_char, strlen(_t_ptr_char));
-        return false;
-    }
-    strcpy(prob->name, _t_ptr_char);
-    _t_ptr_char = StringUtils::strtoke(NULL, "|");
-    if (_t_ptr_char == NULL) {
-        // m_stdErr->printf("MBU::pP - '%s' no grade\n", prob->name);
-        return false;
-    }
-    if (_t_ptr_char[0] != 'V') {
-        // m_stdErr->printf("MBU::pP - '%s' no V\n", prob->name);
-        return false;
-    }
-    prob->grade = atoi(&(_t_ptr_char[1]));
-    if (prob->grade == 0) {
-        // m_stdErr->printf("MBU::pP - '%s' bad grade\n", prob->name);
-        return false;
-    }
-    _t_ptr_char = StringUtils::strtoke(NULL, "|");
-    if (_t_ptr_char == NULL) {
-        // m_stdErr->printf("MBU::pP - '%s' no rating\n", prob->name);
-        return false;
-    }
-    prob->rating = atoi(_t_ptr_char);
-    if (prob->rating == 0) {
-        // m_stdErr->printf("MBU::pP - '%s' bad rating\n", prob->name);
-        return false;
-    }
-    _t_ptr_char = StringUtils::strtoke(NULL, "|");
-    if (_t_ptr_char == NULL) {
-        // m_stdErr->printf("MBU::pP - '%s' no repeats\n", prob->name);
-        return false;
-    }
-    prob->repeats = atoi(_t_ptr_char);
-    if (prob->repeats == 0 && (_t_ptr_char[0] != '0' || _t_ptr_char[1] != '\0')) {
-        // m_stdErr->printf("MBU::pP - '%s' NaN repeats\n", prob->name);
-        return false;
-    }
-    _t_ptr_char = StringUtils::strtoke(NULL, "|");
-    if (_t_ptr_char == NULL) {
-        // m_stdErr->printf("MBU::pP - '%s' no BM\n", prob->name);
-        return false;
-    }
-    switch (_t_ptr_char[0]) {
-    case 'Y':
-        prob->isBenchmark = true;
-        break;
-    case 'N':
-        prob->isBenchmark = false;
-        break;
-    default:
-        return false;
-    }
-    _t_ptr_char = StringUtils::strtoke(NULL, "|");
-    if (_t_ptr_char == NULL) {
-        // m_stdErr->printf("MBU::pP - '%s' no BH\n", prob->name);
-        return false;
-    }
-    if (strlen(_t_ptr_char) > MAX_HOLDS_PER_PANEL * 3) {
-        // m_stdErr->printf("MBU::pP - bH '%s' too long\n", _t_ptr_char);
-        return false;
-    }
-    strcpy(prob->bottomHolds, _t_ptr_char);
-    _t_ptr_char = StringUtils::strtoke(NULL, "|");
-    if (_t_ptr_char == NULL) {
-        // m_stdErr->printf("MBU::pP - '%s' no MH\n", prob->name);
-        return false;
-    }
-    if (strlen(_t_ptr_char) > MAX_HOLDS_PER_PANEL * 3) {
-        // m_stdErr->printf("MBU::pP - mH '%s' too long\n", _t_ptr_char);
-        return false;
-    }
-    strcpy(prob->middleHolds, _t_ptr_char);
-    _t_ptr_char = StringUtils::strtoke(NULL, "|");
-    if (_t_ptr_char == NULL) {
-        // m_stdErr->printf("MBU::pP - '%s' no TH\n", prob->name);
-        return false;
-    }
-    if (strlen(_t_ptr_char) > MAX_HOLDS_PER_PANEL * 3) {
-        // m_stdErr->printf("MBU::pP - tH '%s' too long\n", _t_ptr_char);
-        return false;
-    }
-    strcpy(prob->topHolds, _t_ptr_char);
-    return true;
-}
-
-void MBUtils::printProblem(Problem *p, Print *out) {
-    strcpy(m_buf, "%XXs %s V%d %5d");
-    char t_num[3];
-    snprintf(t_num, 3, "%d", MAX_PROBLEMNAME_LEN);
-    strncpy(&(m_buf[1]), t_num, 2);
-    out->printf(m_buf, p->name, p->isBenchmark ? "(B)" : "   ", p->grade, p->repeats);
-    switch (p->rating) {
-    case 0:
-        out->println("   ");
-        break;
-    case 1:
-        out->println("*  ");
-        break;
-    case 2:
-        out->println("** ");
-        break;
-    case 3:
-        out->println("***");
-        break;
-    default:
-        m_stdErr->printf("MBU::pTS - %s Weird rating %d ", p->name, p->rating);
-        out->println("???");
-    }
 }
 
 void MBUtils::showCatType(Print *outStr, CategoryType *ptrCT) {

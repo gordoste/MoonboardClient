@@ -59,9 +59,6 @@ public:
     MBList *getList() { return &m_list; }
     bool listIsOpen() { return m_list.isOpen(); }
 
-    static bool parseProblem(Problem *p, char *in);
-    void printProblem(Problem *p, Print *out);
-
     void showCatType(Print *outStr, CategoryType *ptrCT);
     void showAllCatTypes(Print *outStr);
     // void showStatus(Print *outStr);
