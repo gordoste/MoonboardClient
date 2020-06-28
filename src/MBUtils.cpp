@@ -1,13 +1,13 @@
 #include "MBUtils.h"
 
 // Pass a buffer for working
-void MBUtils::begin(char *buf, uint16_t bufLen, FS *fs, Print *stdErr) {
-    m_buf = buf;
-    m_bufLen = bufLen;
+void MBUtils::begin(char *tmpBuf, uint16_t tmpBufLen, FS *fs, Print *stdErr) {
+    m_tmpBuf = tmpBuf;
+    m_tmpBufLen = tmpBufLen;
     m_stdErr = stdErr;
     m_fs = fs;
     findCustomLists();
-    m_list.begin(buf, bufLen, fs, stdErr);
+    m_list.begin(tmpBuf, tmpBufLen, fs, stdErr);
 }
 
 void MBUtils::setStdErr(Print *stdErr) {
@@ -20,9 +20,9 @@ SortOrder *MBUtils::addSortOrder(const char *sortOrderStr) {
         m_stdErr->println(F("MBU::sSO - Hit max #"));
         return NULL;
     }
-    strcpy(m_buf, sortOrderStr);
+    strcpy(m_tmpBuf, sortOrderStr);
     strcpy(t_strtok, ":");
-    char *_t_ptr_char = StringUtils::strtoke(m_buf, t_strtok);
+    char *_t_ptr_char = StringUtils::strtoke(m_tmpBuf, t_strtok);
     uint8_t _t_uint8_t = strlen(_t_ptr_char); // +1 for null terminator
     if (_t_uint8_t > MAX_SORTORDER_NAME_LEN) {
         m_stdErr->printf("MBU:sSO - '%s' too long\n", _t_ptr_char);
@@ -71,9 +71,9 @@ void MBUtils::addCat(const char *catName) {
 
 // Pass colon-delimited string. First token is cat type name, others are taken as category names
 CategoryType *MBUtils::addCatType(const char *catType, bool wildcardOpt) {
-    strcpy(m_buf, catType);
+    strcpy(m_tmpBuf, catType);
     strcpy(t_strtok, ":");
-    char *_t_ptr_char = StringUtils::strtoke(m_buf, t_strtok);
+    char *_t_ptr_char = StringUtils::strtoke(m_tmpBuf, t_strtok);
     beginCatType(_t_ptr_char, wildcardOpt);
     while ((_t_ptr_char = StringUtils::strtoke(NULL, t_strtok))) {
         addCat(_t_ptr_char);
@@ -217,16 +217,16 @@ void MBUtils::updateStatus() {
     }
 
     // Check which category types have an ordered index for the selected list
-    m_buf[0] = '/';
-    strcpy(&(m_buf[1]), m_selectedFiltListName);
-    char *_t_ptr_char = &(m_buf[strlen(m_buf)]); // points to the null terminator after /filename
+    m_tmpBuf[0] = '/';
+    strcpy(&(m_tmpBuf[1]), m_selectedFiltListName);
+    char *_t_ptr_char = &(m_tmpBuf[strlen(m_tmpBuf)]); // points to the null terminator after /filename
     strcpy(_t_ptr_char, ".dat");                 // Check if the problem data file (/filename.dat) exists
-    m_selectedFiltListExists = m_fs->exists(m_buf);
+    m_selectedFiltListExists = m_fs->exists(m_tmpBuf);
     // iterate sort orders
     for (uint8_t _t_uint8_t = 0; _t_uint8_t < m_numSortOrders; _t_uint8_t++) {
         // check whether an index file (/filename_sortname.lst) exists for each
         sprintf(_t_ptr_char, "_%s.lst", m_sortOrders[_t_uint8_t].name);
-        m_sortOrders[_t_uint8_t].exists = m_fs->exists(m_buf);
+        m_sortOrders[_t_uint8_t].exists = m_fs->exists(m_tmpBuf);
     }
 }
 

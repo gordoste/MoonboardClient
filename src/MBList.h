@@ -7,7 +7,7 @@
 
 class MBList {
 public:
-    void begin(char *probBuf, uint16_t probBufLen, FS *FS, Print *stdErr);
+    void begin(char *tmpBuf, uint16_t tmpBufLen, FS *FS, Print *stdErr);
     virtual bool open(ListType type, const char *listName, const char *sortOrder);
     void close();
     bool isOpen();
@@ -26,9 +26,9 @@ protected:
     virtual bool seekPage(uint16_t pageNum);
     FS *m_fs;
     Print *m_stdErr;
-    char *m_probBuf;
-    uint16_t m_probBufLen;
-    char tmpBuf[512];
+    char m_probBuf[256];
+    char *m_tmpBuf;
+    uint16_t m_tmpBufLen;
     File listFile, dataFile;
     bool listHasNext = false;
     uint16_t nextProbNum = 0;

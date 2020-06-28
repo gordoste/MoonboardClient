@@ -18,7 +18,7 @@
 
 class MBUtils {
 public:
-    void begin(char *buf, uint16_t bufLen, FS *FS, Print *stdErr);
+    void begin(char *tmpBuf, uint16_t tmpBufLen, FS *FS, Print *stdErr);
     void setStdErr(Print *stdErr);
     CategoryType *addCatType(const char *catType, bool wildcardOpt = true);
     SortOrder *addSortOrder(const char *sortOrderStr);
@@ -87,8 +87,8 @@ private:
 
     FS *m_fs;
     Print *m_stdErr;
-    char *m_buf;
-    uint16_t m_bufLen;
+    char *m_tmpBuf;
+    uint16_t m_tmpBufLen;
 
     bool m_selectedFiltListExists;
     char m_selectedFiltListName[MAX_LISTNAME_SIZE + 1];

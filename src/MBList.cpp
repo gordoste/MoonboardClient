@@ -1,8 +1,8 @@
 #include "MBList.h"
 
-void MBList::begin(char *probBuf, uint16_t probBufLen, FS *fs, Print *stdErr) {
-    m_probBuf = probBuf;
-    m_probBufLen = probBufLen;
+void MBList::begin(char *tmpBuf, uint16_t tmpBufLen, FS *fs, Print *stdErr) {
+    m_tmpBuf = tmpBuf;
+    m_tmpBufLen = tmpBufLen;
     m_stdErr = stdErr;
     m_fs = fs;
 }
@@ -11,8 +11,8 @@ bool MBList::open(ListType type, const char *listName, const char *sortOrder) {
     if (!openListFile(type, listName, sortOrder)) return false;
 
     // Read the number of problems and store
-    listFile.readStringUntil('\n').toCharArray(tmpBuf, sizeof(tmpBuf));
-    long int numProbs = strtol(tmpBuf, NULL, 10);
+    listFile.readStringUntil('\n').toCharArray(m_tmpBuf, m_tmpBufLen);
+    long int numProbs = strtol(m_tmpBuf, NULL, 10);
     if (numProbs <= 0) return false;
     listSize = numProbs;
     while (numProbs > 0) { // Skip through all the problems
@@ -21,11 +21,11 @@ bool MBList::open(ListType type, const char *listName, const char *sortOrder) {
     }
     // Read and store the list of offsets
     pageOffsets.clear();
-    listFile.readStringUntil(':').toCharArray(tmpBuf, sizeof(tmpBuf));
-    while (strlen(tmpBuf) > 0) {
-        long int offset = strtol(tmpBuf, NULL, 10);
+    listFile.readStringUntil(':').toCharArray(m_tmpBuf, m_tmpBufLen);
+    while (strlen(m_tmpBuf) > 0) {
+        long int offset = strtol(m_tmpBuf, NULL, 10);
         if (offset > 0) pageOffsets.push_back(offset);
-        listFile.readStringUntil(':').toCharArray(tmpBuf, sizeof(tmpBuf));
+        listFile.readStringUntil(':').toCharArray(m_tmpBuf, m_tmpBufLen);
     }
     // Reopen the list
     listFile.close();
@@ -57,8 +57,8 @@ bool MBList::seekPage(uint16_t pageNum) {
 bool MBList::fetchNextProblem() {
     if (!dataFile) return false;
     if (nextProbNum == listSize) return false;
-    if (readListEntryAndSeekInData() == -1) return false;
-    dataFile.readStringUntil('\n').toCharArray(m_probBuf, m_probBufLen);
+    if (MBData::readListEntryAndSeekInData(listFile, dataFile, m_tmpBuf, m_tmpBufLen) == -1) return false;
+    dataFile.readStringUntil('\n').toCharArray(m_probBuf, sizeof(m_probBuf));
     if (strlen(m_probBuf) == 0) return false;
     return true;
 }
@@ -110,15 +110,14 @@ uint8_t MBList::readPage(Problem pArr[], uint16_t pageNum) {
 
 bool MBList::openListFile(ListType type, const char *listName, const char *sortOrder) {
     if (listFile) listFile.close();
-    if (!listFileNameToBuf(type, listName, sortOrder, tmpBuf, sizeof(tmpBuf))) return false;
-    listFile = m_fs->open(tmpBuf);
+    if (!MBData::listFileNameToBuf(type, listName, sortOrder, m_tmpBuf, m_tmpBufLen)) return false;
+    listFile = m_fs->open(m_tmpBuf);
     return listFile;
 }
 
-
 bool MBList::openDataFile(ListType type, const char *listName) {
     if (dataFile) dataFile.close();
-    if (!dataFileNameToBuf(type, listName, tmpBuf, sizeof(tmpBuf))) return false;
-    dataFile = m_fs->open(tmpBuf);
+    if (!MBData::dataFileNameToBuf(type, listName, m_tmpBuf, m_tmpBufLen)) return false;
+    dataFile = m_fs->open(m_tmpBuf);
     return dataFile;
 }
