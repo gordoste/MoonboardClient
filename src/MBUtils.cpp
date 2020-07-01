@@ -508,3 +508,15 @@ bool MBUtils::addProblem(const Problem *p, const char *listName, const std::vect
     }
     return true;
 }
+
+// Remove the specified problem from a custom list. Involves rewriting the list files that have problems sorted
+bool MBUtils::deleteProblem(const Problem *p, const char *listName, const std::vector<SortOrder *> *sortOrders) {
+    return true;
+}
+
+// Delete a problem from the currently open list, which must be a custom list.
+bool MBUtils::deleteProblemFromOpenList(const Problem *p, const std::vector<SortOrder *> *sortOrders) {
+    if (!m_list.isOpen()) return false;
+    if (m_list.getType() != LIST_CUSTOM) return false;
+    deleteProblem(p, m_list.getName(), sortOrders);
+}

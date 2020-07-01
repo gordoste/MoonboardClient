@@ -50,6 +50,8 @@ public:
     bool listIsOpen() { return m_list.isOpen(); }
 
     bool addProblem(const Problem *p, const char *listName, const std::vector<SortOrder *> *sortOrders);
+    bool deleteProblem(const Problem *p, const char *listName, const std::vector<SortOrder *> *sortOrders);
+    bool deleteProblemFromOpenList(const Problem *p, const std::vector<SortOrder *> *sortOrders);
 
     void showCatType(Print *outStr, CategoryType *ptrCT);
     void showAllCatTypes(Print *outStr);
