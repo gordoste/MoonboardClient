@@ -39,6 +39,7 @@ bool MBList::open(ListType type, const char *listName, const char *sortOrder) {
     }
     nextProbNum = 0;
     listHasNext = fetchNextProblem();
+    m_listType = type;
     return true;
 }
 

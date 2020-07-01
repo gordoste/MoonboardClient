@@ -17,6 +17,7 @@ public:
     bool hasNext() { return listHasNext; }
     bool hasPrevPage() { return nextProbNum > CONST_PAGE_SIZE; };
     bool fetchNextProblem();
+    ListType getType() { return m_listType; }
     uint16_t getPageNum();
     uint8_t readNextPage(Problem pArr[]);
     uint8_t readPrevPage(Problem pArr[]);
@@ -33,6 +34,7 @@ protected:
     bool listHasNext = false;
     uint16_t nextProbNum = 0;
     uint16_t listSize = 0;
+    ListType m_listType;
     std::vector<uint32_t> pageOffsets = std::vector<uint32_t>();
     bool openListFile(ListType type, const char *listName, const char *sortOrder);
     bool openDataFile(ListType type, const char *listName);
