@@ -6,16 +6,6 @@
 #include "StringUtils.h"
 #include <FS.h>
 
-#define MAX_LISTNAME_SIZE 15
-#define MAX_SORT_ORDERS 4
-#define CAT_BUF_SIZE 256
-#define MAX_CAT_TYPES 5
-#define MAX_CUSTOM_LISTS 10
-
-#ifndef MB_WILDCARD_STRING
-#define MB_WILDCARD_STRING "Any"
-#endif
-
 class MBUtils {
 public:
     void begin(char *tmpBuf, uint16_t tmpBufLen, FS *FS, Print *stdErr);
