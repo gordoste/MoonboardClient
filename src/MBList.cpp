@@ -40,6 +40,8 @@ bool MBList::open(ListType type, const char *listName, const char *sortOrder) {
     nextProbNum = 0;
     listHasNext = fetchNextProblem();
     m_listType = type;
+    strncpy(m_listName, listName, MAX_LISTNAME_SIZE);
+    m_listName[MAX_LISTNAME_SIZE] = '\0';
     return true;
 }
 
