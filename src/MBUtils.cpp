@@ -220,7 +220,7 @@ void MBUtils::updateStatus() {
     m_tmpBuf[0] = '/';
     strcpy(&(m_tmpBuf[1]), m_selectedFiltListName);
     char *_t_ptr_char = &(m_tmpBuf[strlen(m_tmpBuf)]); // points to the null terminator after /filename
-    strcpy(_t_ptr_char, ".dat");                 // Check if the problem data file (/filename.dat) exists
+    strcpy(_t_ptr_char, ".dat");                       // Check if the problem data file (/filename.dat) exists
     m_selectedFiltListExists = m_fs->exists(m_tmpBuf);
     // iterate sort orders
     for (uint8_t _t_uint8_t = 0; _t_uint8_t < m_numSortOrders; _t_uint8_t++) {
@@ -385,7 +385,7 @@ bool MBUtils::addProblem(const Problem *p, const char *listName, const std::vect
     if (!newDataFile) return false;
     long int newProbDataPos = 0;
     for (String s = oldDataFile.readStringUntil('\n'); s.length() > 0; s = oldDataFile.readStringUntil('\n')) {
-        newProbDataPos += newDataFile.print(s+'\n');
+        newProbDataPos += newDataFile.print(s + '\n');
     }
     writeProblem(p, newDataFile);
     newDataFile.close();
@@ -470,15 +470,20 @@ bool MBUtils::addProblem(const Problem *p, const char *listName, const std::vect
                 oldDataFile.readStringUntil('\n').toCharArray(m_tmpBuf, m_tmpBufLen);
                 probsRead++;
                 if (!parseProblem(&tmpProblem, m_tmpBuf)) return false;
-                //      - ... check to see if we've gone past the new problem's pos in the sorted list
-                if (comesBefore(*soIt, p, &tmpProblem)) {
-                    // Time to write our problem
-                    listBytesWritten += newListFile.printf("-:%ld\n", newProbDataPos);
-                    probsWritten++;
+                // If the problem is already in this list then pretend it has been added
+                if (strcmp(tmpProblem.name, p->name) == 0) {
                     wroteProblem = true;
+                } else {
+                    //      - ... check to see if we've gone past the new problem's pos in the sorted list
+                    if (comesBefore(*soIt, p, &tmpProblem)) {
+                        // Time to write our problem
+                        listBytesWritten += newListFile.printf("-:%ld\n", newProbDataPos);
+                        probsWritten++;
+                        wroteProblem = true;
+                    }
+                    listBytesWritten += newListFile.printf("-:%d\n", dataPos);
+                    probsWritten++;
                 }
-                listBytesWritten += newListFile.printf("-:%d\n", dataPos);
-                probsWritten++;
             }
         }
         // If we still haven't written the new problem then it must come last
