@@ -609,9 +609,14 @@ bool MBUtils::deleteProblem(const Problem *p, const char *listName, const std::v
     return true;
 }
 
-// Delete a problem from the currently open list, which must be a custom list.
+// Delete a problem from the currently open list, which must be a custom list. Reopens the list at the start
 bool MBUtils::deleteProblemFromOpenList(const Problem *p, const std::vector<SortOrder *> *sortOrders) {
     if (!m_list.isOpen()) return false;
     if (m_list.getType() != LIST_CUSTOM) return false;
-    return deleteProblem(p, m_list.getName(), sortOrders);
+    const char *name = m_list.getName();
+    const char *so = m_list.getSortOrder();
+    m_list.close();
+    if (!deleteProblem(p, m_list.getName(), sortOrders)) return false;
+    m_list.open(LIST_CUSTOM, name, so);
+    return true;
 }
