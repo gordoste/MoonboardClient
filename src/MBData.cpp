@@ -163,10 +163,10 @@ bool comesBefore(const SortOrder *so, const Problem *p1, const Problem *p2) {
     return false;
 }
 
-int MBData::readListEntryAndSeekInData(File &_list, File &_data, char *buf, size_t bufLen) {
+int MBData::readListEntryAndSeekInData(File &_list, File &_data, char *buf, size_t bufLen, bool seekInData) {
     // Check list is open
     char *_t_ptr_char;
-    if (!_list) return false;
+    if (!_list) return -1;
     _list.readStringUntil('\n').toCharArray(buf, bufLen);
     _t_ptr_char = StringUtils::strtoke(buf, ":");
     if (_t_ptr_char == NULL) {
@@ -177,6 +177,13 @@ int MBData::readListEntryAndSeekInData(File &_list, File &_data, char *buf, size
         return -1;
     }
     int offset = atoi(_t_ptr_char);
-    if (!_data.seek(offset, SeekSet)) return -1;
+    if (seekInData) {
+        if (!_data.seek(offset, SeekSet)) return -1;
+    }
     return offset;
+}
+
+int MBData::readListEntryDataOffset(File &_list, char *buf, size_t bufLen) {
+    File dummy = File();
+    return readListEntryAndSeekInData(_list, dummy, buf, bufLen, false);
 }
