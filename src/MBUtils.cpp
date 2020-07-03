@@ -496,8 +496,103 @@ bool MBUtils::addProblem(const Problem *p, const char *listName, const std::vect
         }
 
         listBytesWritten += newListFile.printf("%d", newPageOffsets[0]);
-        for (uint8_t i = 1; i < newPageOffsets.size(); i++) {
+        for (uint8_t i = 1; i < newPageOffsets.size(); i++)
             listBytesWritten += newListFile.printf(":%d", newPageOffsets[i]);
+        listBytesWritten += newListFile.println();
+        newListFile.close();
+    }
+    if (!MBData::dataFileNameToBuf(LIST_CUSTOM, listName, m_tmpBuf, m_tmpBufLen)) return false;
+    m_fs->remove(m_tmpBuf);
+    if (!m_fs->rename("/__newdata", m_tmpBuf)) return false;
+    for (auto soIt = sortOrders->begin(); soIt < sortOrders->end(); soIt++) {
+        snprintf(m_tmpBuf, 40, "/__newlist_%s", (*soIt)->name);
+        if (!MBData::listFileNameToBuf(LIST_CUSTOM, listName, (*soIt)->name, m_tmpBuf + 40, m_tmpBufLen - 40)) return false;
+        m_fs->remove(m_tmpBuf + 40);
+        if (!m_fs->rename(m_tmpBuf, m_tmpBuf + 40)) return false;
+    }
+    return true;
+}
+
+// Remove the specified problem from a custom list. Involves rewriting the list files that have problems sorted
+bool MBUtils::deleteProblem(const Problem *p, const char *listName, const std::vector<SortOrder *> *sortOrders) {
+    Problem tmpProblem;
+    // Copy the data file, ignoring the specified problem
+    if (!MBData::dataFileNameToBuf(LIST_CUSTOM, listName, m_tmpBuf, m_tmpBufLen)) return false;
+    File oldDataFile = m_fs->open(m_tmpBuf);
+    if (!oldDataFile) return false;
+    File newDataFile = m_fs->open("/__newdata", "w");
+    if (!newDataFile) return false;
+    long int oldProbDataPos = 0;
+    long int oldProbLen = 0;
+    long int dataBytesWritten = 0;
+    bool deleted = false;
+    for (String s = oldDataFile.readStringUntil('\n'); s.length() > 0; s = oldDataFile.readStringUntil('\n')) {
+        bool deleteThis = false;
+        if (!deleted) {
+            s.toCharArray(m_tmpBuf, m_tmpBufLen);
+            if (!parseProblem(&tmpProblem, m_tmpBuf)) return false;
+            if (strcmp(tmpProblem.name, p->name) == 0) {
+                deleteThis = true;
+                oldProbLen = s.length() + 1; // How long is the line we're deleting?
+            } else {
+                oldProbDataPos += s.length() + 1; // Update to # of bytes read so far
+            }
+        }
+        if (!deleteThis) {
+            dataBytesWritten += newDataFile.print(s + '\n');
+        } else {
+            deleted = true;
+        }
+    }
+    newDataFile.close();
+    if (!deleted) {
+        m_fs->remove("/__newdata");
+        return true;
+    }
+    std::vector<uint32_t> pageOffsets = std::vector<uint32_t>();
+    // For each sort order ...
+    for (auto soIt = sortOrders->begin(); soIt < sortOrders->end(); soIt++) {
+        pageOffsets.clear();
+        uint32_t listBytesWritten = 0;
+        sprintf(m_tmpBuf, "/__newlist_%s", (*soIt)->name);
+        File newListFile = m_fs->open(m_tmpBuf, "w");
+        if (!newListFile) return false;
+        //      - open the list file for that sort order
+        if (!MBData::listFileNameToBuf(LIST_CUSTOM, listName, (*soIt)->name, m_tmpBuf, m_tmpBufLen)) return false;
+        File oldListFile = m_fs->open(m_tmpBuf);
+        if (!oldListFile) return false;
+        //      - delete one from  first line (# problems)
+        oldListFile.readStringUntil('\n').toCharArray(m_tmpBuf, m_tmpBufLen);
+        long int numProbs = strtol(m_tmpBuf, NULL, 10);
+        if (numProbs <= 0) return false;
+        listBytesWritten += newListFile.printf("%ld\n", numProbs - 1);
+
+        long int probsRead = 0;
+        long int probsWritten = 0;
+        long int dataPos;
+        //  - ... read the data offset from the list entry
+        while (probsRead < numProbs) {
+            dataPos = MBData::readListEntryDataOffset(oldListFile, m_tmpBuf, m_tmpBufLen);
+            probsRead++;
+            if (dataPos != oldProbDataPos) {
+                if (probsWritten % CONST_PAGE_SIZE == 0)
+                    pageOffsets.push_back(listBytesWritten);
+                //  - ... compare this problem's position to the deleted one's
+                if (dataPos < oldProbDataPos) { // Before
+                    listBytesWritten += newListFile.printf("-:%ld\n", dataPos);
+                    probsWritten++;
+                }
+                if (dataPos > oldProbDataPos) { // After
+                    listBytesWritten += newListFile.printf("-:%ld\n", dataPos - oldProbLen);
+                    probsWritten++;
+                }
+            }
+        }
+
+        listBytesWritten += newListFile.printf("%d", pageOffsets[0]);
+        if (pageOffsets.size() > 1) {
+            for (uint8_t i = 1; i < pageOffsets.size(); i++)
+                listBytesWritten += newListFile.printf(":%d", pageOffsets[i]);
         }
         listBytesWritten += newListFile.println();
         newListFile.close();
@@ -507,15 +602,10 @@ bool MBUtils::addProblem(const Problem *p, const char *listName, const std::vect
     if (!m_fs->rename("/__newdata", m_tmpBuf)) return false;
     for (auto soIt = sortOrders->begin(); soIt < sortOrders->end(); soIt++) {
         snprintf(m_tmpBuf, 40, "/__newlist_%s", (*soIt)->name);
-        if (!MBData::listFileNameToBuf(LIST_CUSTOM, listName, (*soIt)->name, m_tmpBuf+40, m_tmpBufLen-40)) return false;
-        m_fs->remove(m_tmpBuf+40);
-        if (!m_fs->rename(m_tmpBuf, m_tmpBuf+40)) return false;
+        if (!MBData::listFileNameToBuf(LIST_CUSTOM, listName, (*soIt)->name, m_tmpBuf + 40, m_tmpBufLen - 40)) return false;
+        m_fs->remove(m_tmpBuf + 40);
+        if (!m_fs->rename(m_tmpBuf, m_tmpBuf + 40)) return false;
     }
-    return true;
-}
-
-// Remove the specified problem from a custom list. Involves rewriting the list files that have problems sorted
-bool MBUtils::deleteProblem(const Problem *p, const char *listName, const std::vector<SortOrder *> *sortOrders) {
     return true;
 }
 
@@ -523,5 +613,5 @@ bool MBUtils::deleteProblem(const Problem *p, const char *listName, const std::v
 bool MBUtils::deleteProblemFromOpenList(const Problem *p, const std::vector<SortOrder *> *sortOrders) {
     if (!m_list.isOpen()) return false;
     if (m_list.getType() != LIST_CUSTOM) return false;
-    deleteProblem(p, m_list.getName(), sortOrders);
+    return deleteProblem(p, m_list.getName(), sortOrders);
 }
