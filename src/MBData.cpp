@@ -125,13 +125,13 @@ size_t writeProblem(const Problem *prob, Stream &out) {
                prob->bottomHolds, prob->middleHolds, prob->topHolds);
 }
 
-bool MBData::listFileNameToBuf(ListType type, const char *listName, const char *sortOrder, char *buf, size_t bufLen) {
+bool MBData::listFileNameToBuf(ListType type, const char *listName, const SortOrder *sortOrder, char *buf, size_t bufLen) {
     switch (type) {
     case ListType::LIST_FILTER:
-        snprintf(buf, bufLen, "/%s_%s.lst", listName, sortOrder);
+        snprintf(buf, bufLen, "/%s_%s.lst", listName, sortOrder->name);
         break;
     case ListType::LIST_CUSTOM:
-        snprintf(buf, bufLen, "%s/%s_%s.lst", MB_PROBLIST_DIR, listName, sortOrder);
+        snprintf(buf, bufLen, "%s/%s_%s.lst", MB_PROBLIST_DIR, listName, sortOrder->name);
         break;
     default:
         return false;

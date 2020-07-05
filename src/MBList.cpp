@@ -7,7 +7,7 @@ void MBList::begin(char *tmpBuf, uint16_t tmpBufLen, FS *fs, Print *stdErr) {
     m_fs = fs;
 }
 
-bool MBList::open(ListType type, const char *listName, const char *sortOrder) {
+bool MBList::open(ListType type, const char *listName, const SortOrder *sortOrder) {
     if (!openListFile(type, listName, sortOrder)) return false;
 
     // Read the number of problems and store
@@ -44,10 +44,7 @@ bool MBList::open(ListType type, const char *listName, const char *sortOrder) {
         strncpy(m_listName, listName, MAX_LISTNAME_SIZE);
         m_listName[MAX_LISTNAME_SIZE] = '\0';
     }
-    if (sortOrder != m_sortOrder) {
-        strncpy(m_sortOrder, sortOrder, MAX_SORTORDER_NAME_LEN);
-        m_sortOrder[MAX_SORTORDER_NAME_LEN] = '\0';
-    }
+    m_sortOrder = sortOrder;
     return true;
 }
 
@@ -117,7 +114,7 @@ uint8_t MBList::readPage(Problem pArr[], uint16_t pageNum) {
     return readNextProblems(pArr, CONST_PAGE_SIZE);
 }
 
-bool MBList::openListFile(ListType type, const char *listName, const char *sortOrder) {
+bool MBList::openListFile(ListType type, const char *listName, const SortOrder *sortOrder) {
     if (listFile) listFile.close();
     if (!MBData::listFileNameToBuf(type, listName, sortOrder, m_tmpBuf, m_tmpBufLen)) return false;
     listFile = m_fs->open(m_tmpBuf);

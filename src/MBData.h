@@ -73,7 +73,7 @@ enum ListType {
 };
 
 namespace MBData {
-bool listFileNameToBuf(ListType type, const char *listName, const char *sortOrder, char *buf, size_t bufLen);
+bool listFileNameToBuf(ListType type, const char *listName, const SortOrder *sortOrder, char *buf, size_t bufLen);
 bool dataFileNameToBuf(ListType type, const char *listName, char *buf, size_t bufLen);
 int readListEntryAndSeekInData(File &_list, File &_data, char *buf, size_t bufLen, bool seekInData = true);
 int readListEntryDataOffset(File &_list, char *buf, size_t bufLen);

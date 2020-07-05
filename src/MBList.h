@@ -8,7 +8,7 @@
 class MBList {
 public:
     void begin(char *tmpBuf, uint16_t tmpBufLen, FS *FS, Print *stdErr);
-    virtual bool open(ListType type, const char *listName, const char *sortOrder);
+    bool open(ListType type, const char *listName, const SortOrder *sortOrder);
     void close();
     bool isOpen();
     bool readNextProblem(Problem *p);
@@ -19,14 +19,14 @@ public:
     bool fetchNextProblem();
     ListType getType() { return m_listType; }
     const char *getName() { return (const char *)m_listName; }
-    const char *getSortOrder() { return (const char *)m_sortOrder; }
+    const SortOrder *getSortOrder() { return m_sortOrder; }
     uint16_t getPageNum();
     uint8_t readNextPage(Problem pArr[]);
     uint8_t readPrevPage(Problem pArr[]);
     uint8_t readPage(Problem pArr[], uint16_t pageNum);
 
 protected:
-    virtual bool seekPage(uint16_t pageNum);
+    bool seekPage(uint16_t pageNum);
     FS *m_fs;
     Print *m_stdErr;
     char m_probBuf[256];
@@ -38,9 +38,9 @@ protected:
     uint16_t listSize = 0;
     ListType m_listType;
     char m_listName[MAX_LISTNAME_SIZE+1];
-    char m_sortOrder[MAX_SORTORDER_NAME_LEN+1];
+    const SortOrder *m_sortOrder;
     std::vector<uint32_t> pageOffsets = std::vector<uint32_t>();
-    bool openListFile(ListType type, const char *listName, const char *sortOrder);
+    bool openListFile(ListType type, const char *listName, const SortOrder *sortOrder);
     bool openDataFile(ListType type, const char *listName);
 };
 

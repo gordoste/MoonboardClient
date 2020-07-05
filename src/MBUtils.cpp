@@ -241,7 +241,7 @@ SortOrder *MBUtils::getSortOrderByName(const char *sortOrderName) {
 }
 
 // Opens the specified list using the specified sort order (NULL for sortOrder means order will be as it is read from the file)
-bool MBUtils::openFilteredList(const char *listName, const char *sortOrder) {
+bool MBUtils::openFilteredList(const char *listName, const SortOrder *sortOrder) {
     if (m_list.isOpen()) m_list.close();
     if (sortOrder == NULL || listName == NULL) return false;
     if (!m_list.open(ListType::LIST_FILTER, listName, sortOrder)) return false;
@@ -249,7 +249,7 @@ bool MBUtils::openFilteredList(const char *listName, const char *sortOrder) {
 }
 
 // Opens the list corresponding to the selections made (or not) using the specified sort order
-bool MBUtils::openSelectedFilteredList(const char *sortOrder) {
+bool MBUtils::openSelectedFilteredList(const SortOrder *sortOrder) {
     return openFilteredList(m_selectedFiltListName, sortOrder);
 }
 
@@ -356,7 +356,7 @@ void MBUtils::checkFileIsCustomList(const char *fileName) {
     }
 }
 
-bool MBUtils::openCustomList(uint8_t z_listNum) {
+bool MBUtils::openCustomList(uint8_t z_listNum, const SortOrder *sortOrder) {
     if (m_list.isOpen()) m_list.close();
     if (z_listNum >= m_numCustomLists) return false;
     if (m_list.open(ListType::LIST_CUSTOM, m_customListNames[z_listNum], "name")) {
@@ -397,7 +397,7 @@ bool MBUtils::addProblem(const Problem *p, const char *listName, const std::vect
         File newListFile = m_fs->open(m_tmpBuf, "w");
         if (!newListFile) return false;
         //      - open the list file for that sort order
-        if (!MBData::listFileNameToBuf(LIST_CUSTOM, listName, (*soIt)->name, m_tmpBuf, m_tmpBufLen)) return false;
+        if (!MBData::listFileNameToBuf(LIST_CUSTOM, listName, *soIt, m_tmpBuf, m_tmpBufLen)) return false;
         File oldListFile = m_fs->open(m_tmpBuf);
         if (!oldListFile) return false;
         //      - add one to first line (# problems)
@@ -506,7 +506,7 @@ bool MBUtils::addProblem(const Problem *p, const char *listName, const std::vect
     if (!m_fs->rename("/__newdata", m_tmpBuf)) return false;
     for (auto soIt = sortOrders->begin(); soIt < sortOrders->end(); soIt++) {
         snprintf(m_tmpBuf, 40, "/__newlist_%s", (*soIt)->name);
-        if (!MBData::listFileNameToBuf(LIST_CUSTOM, listName, (*soIt)->name, m_tmpBuf + 40, m_tmpBufLen - 40)) return false;
+        if (!MBData::listFileNameToBuf(LIST_CUSTOM, listName, *soIt, m_tmpBuf + 40, m_tmpBufLen - 40)) return false;
         m_fs->remove(m_tmpBuf + 40);
         if (!m_fs->rename(m_tmpBuf, m_tmpBuf + 40)) return false;
     }
@@ -558,7 +558,7 @@ bool MBUtils::deleteProblem(const Problem *p, const char *listName, const std::v
         File newListFile = m_fs->open(m_tmpBuf, "w");
         if (!newListFile) return false;
         //      - open the list file for that sort order
-        if (!MBData::listFileNameToBuf(LIST_CUSTOM, listName, (*soIt)->name, m_tmpBuf, m_tmpBufLen)) return false;
+        if (!MBData::listFileNameToBuf(LIST_CUSTOM, listName, *soIt, m_tmpBuf, m_tmpBufLen)) return false;
         File oldListFile = m_fs->open(m_tmpBuf);
         if (!oldListFile) return false;
         //      - delete one from  first line (# problems)
@@ -602,7 +602,7 @@ bool MBUtils::deleteProblem(const Problem *p, const char *listName, const std::v
     if (!m_fs->rename("/__newdata", m_tmpBuf)) return false;
     for (auto soIt = sortOrders->begin(); soIt < sortOrders->end(); soIt++) {
         snprintf(m_tmpBuf, 40, "/__newlist_%s", (*soIt)->name);
-        if (!MBData::listFileNameToBuf(LIST_CUSTOM, listName, (*soIt)->name, m_tmpBuf + 40, m_tmpBufLen - 40)) return false;
+        if (!MBData::listFileNameToBuf(LIST_CUSTOM, listName, *soIt, m_tmpBuf + 40, m_tmpBufLen - 40)) return false;
         m_fs->remove(m_tmpBuf + 40);
         if (!m_fs->rename(m_tmpBuf, m_tmpBuf + 40)) return false;
     }
@@ -614,7 +614,7 @@ bool MBUtils::deleteProblemFromOpenList(const Problem *p, const std::vector<Sort
     if (!m_list.isOpen()) return false;
     if (m_list.getType() != LIST_CUSTOM) return false;
     const char *name = m_list.getName();
-    const char *so = m_list.getSortOrder();
+    const SortOrder *so = m_list.getSortOrder();
     m_list.close();
     if (!deleteProblem(p, m_list.getName(), sortOrders)) return false;
     m_list.open(LIST_CUSTOM, name, so);

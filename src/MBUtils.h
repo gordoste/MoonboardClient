@@ -36,9 +36,9 @@ public:
     const char *getSelectedFilteredListName();
     bool selectedFilteredListExists() { return m_selectedFiltListExists; }
 
-    bool openSelectedFilteredList(const char *sortOrder);
-    bool openFilteredList(const char *listName, const char *sortOrder);
-    bool openCustomList(uint8_t z_listNum);
+    bool openSelectedFilteredList(const SortOrder *sortOrder);
+    bool openFilteredList(const char *listName, const SortOrder *sortOrder);
+    bool openCustomList(uint8_t z_listNum, const SortOrder *);
     const char *getSelectedCustomListName();
     uint16_t getPageNum();
 
