@@ -359,7 +359,7 @@ void MBUtils::checkFileIsCustomList(const char *fileName) {
 bool MBUtils::openCustomList(uint8_t z_listNum, const SortOrder *sortOrder) {
     if (m_list.isOpen()) m_list.close();
     if (z_listNum >= m_numCustomLists) return false;
-    if (m_list.open(ListType::LIST_CUSTOM, m_customListNames[z_listNum], "name")) {
+    if (m_list.open(ListType::LIST_CUSTOM, m_customListNames[z_listNum], sortOrder)) {
         m_selectedCustomList = z_listNum;
         return true;
     }
