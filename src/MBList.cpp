@@ -11,34 +11,32 @@ bool MBList::open(ListType type, const char *listName, const SortOrder *sortOrde
     if (!openListFile(type, listName, sortOrder)) return false;
 
     // Read the number of problems and store
-    listFile.readStringUntil('\n').toCharArray(m_tmpBuf, m_tmpBufLen);
-    long int numProbs = strtol(m_tmpBuf, NULL, 10);
-    if (numProbs <= 0) return false;
-    listSize = numProbs;
-    while (numProbs > 0) { // Skip through all the problems
-        listFile.readStringUntil('\n');
-        numProbs--;
-    }
+    m_listFile.readStringUntil('\n').toCharArray(m_tmpBuf, m_tmpBufLen);
+    m_listSize = strtol(m_tmpBuf, NULL, 10);
+    if (m_listSize <= 0) return false;
+    // Skip through all the problems
+    for (long int l = m_listSize; l > 0; l--)
+        m_listFile.readStringUntil('\n');
     // Read and store the list of offsets
     pageOffsets.clear();
-    listFile.readStringUntil(':').toCharArray(m_tmpBuf, m_tmpBufLen);
+    m_listFile.readStringUntil(':').toCharArray(m_tmpBuf, m_tmpBufLen);
     while (strlen(m_tmpBuf) > 0) {
         long int offset = strtol(m_tmpBuf, NULL, 10);
         if (offset > 0) pageOffsets.push_back(offset);
-        listFile.readStringUntil(':').toCharArray(m_tmpBuf, m_tmpBufLen);
+        m_listFile.readStringUntil(':').toCharArray(m_tmpBuf, m_tmpBufLen);
     }
     // Reopen the list
-    listFile.close();
+    m_listFile.close();
 
     if (!openListFile(type, listName, sortOrder)) return false;
-    listFile.readStringUntil('\n'); // Skip the first line (# of problems)
+    m_listFile.readStringUntil('\n'); // Skip the first line (# of problems)
 
     if (!openDataFile(type, listName)) {
-        listFile.close();
+        m_listFile.close();
         return false;
     }
-    nextProbNum = 0;
-    listHasNext = fetchNextProblem();
+    m_nextProbNum = 0;
+    m_listHasNext = fetchNextProblem();
     m_listType = type;
     if (listName != m_listName) {
         strncpy(m_listName, listName, MAX_LISTNAME_SIZE);
@@ -48,44 +46,45 @@ bool MBList::open(ListType type, const char *listName, const SortOrder *sortOrde
     return true;
 }
 
-bool MBList::isOpen() { return dataFile; }
+bool MBList::isOpen() { return m_dataFile; }
 
 bool MBList::seekPage(uint16_t pageNum) {
-    if (!dataFile) return false;
+    if (!m_dataFile) return false;
     if (pageNum >= pageOffsets.size()) return false;
-    if (!listFile.seek(pageOffsets[pageNum], SeekSet)) return false;
-    nextProbNum = pageNum * CONST_PAGE_SIZE;
-    listHasNext = fetchNextProblem();
+    if (!m_listFile.seek(pageOffsets[pageNum], SeekSet)) return false;
+    m_nextProbNum = pageNum * CONST_PAGE_SIZE;
+    m_listHasNext = fetchNextProblem();
     return true;
 }
 
 // m_nextProbNum needs to already be set to the new value before calling
 bool MBList::fetchNextProblem() {
-    if (!dataFile) return false;
-    if (nextProbNum == listSize) return false;
-    if (MBData::readListEntryAndSeekInData(listFile, dataFile, m_tmpBuf, m_tmpBufLen) == -1) return false;
-    dataFile.readStringUntil('\n').toCharArray(m_probBuf, sizeof(m_probBuf));
+    if (!m_dataFile) return false;
+    if (m_nextProbNum == m_listSize) return false;
+    if (MBData::readListEntryAndSeekInData(m_listFile, m_dataFile, m_tmpBuf, m_tmpBufLen) == -1) return false;
+    m_dataFile.readStringUntil('\n').toCharArray(m_probBuf, sizeof(m_probBuf));
     if (strlen(m_probBuf) == 0) return false;
     return true;
 }
 
 void MBList::close() {
-    if (listFile) listFile.close();
-    if (dataFile) dataFile.close();
+    if (m_listFile) m_listFile.close();
+    if (m_dataFile) m_dataFile.close();
+    m_listSize = 0;
 }
 
 // Read next problem from the currently open list
 // The problem will be pre-fetched into buffer each time
 bool MBList::readNextProblem(Problem *prob) {
-    if (!listHasNext) return false;                   // List exhausted
+    if (!m_listHasNext) return false;                 // List exhausted
     if (!parseProblem(prob, m_probBuf)) return false; // Parse the one in cache
-    nextProbNum++;
-    listHasNext = fetchNextProblem(); // Fetch next one into cache
+    m_nextProbNum++;
+    m_listHasNext = fetchNextProblem(); // Fetch next one into cache
     return true;
 }
 
 uint16_t MBList::getPageNum() {
-    return (nextProbNum - 1) / CONST_PAGE_SIZE;
+    return (m_nextProbNum - 1) / CONST_PAGE_SIZE;
 }
 
 // Read problems (up to max. # specified) from the open list into given array. Returns # problems read.
@@ -115,15 +114,15 @@ uint8_t MBList::readPage(Problem pArr[], uint16_t pageNum) {
 }
 
 bool MBList::openListFile(ListType type, const char *listName, const SortOrder *sortOrder) {
-    if (listFile) listFile.close();
+    if (m_listFile) m_listFile.close();
     if (!MBData::listFileNameToBuf(type, listName, sortOrder, m_tmpBuf, m_tmpBufLen)) return false;
-    listFile = m_fs->open(m_tmpBuf);
-    return listFile;
+    m_listFile = m_fs->open(m_tmpBuf);
+    return m_listFile;
 }
 
 bool MBList::openDataFile(ListType type, const char *listName) {
-    if (dataFile) dataFile.close();
+    if (m_dataFile) m_dataFile.close();
     if (!MBData::dataFileNameToBuf(type, listName, m_tmpBuf, m_tmpBufLen)) return false;
-    dataFile = m_fs->open(m_tmpBuf);
-    return dataFile;
+    m_dataFile = m_fs->open(m_tmpBuf);
+    return m_dataFile;
 }

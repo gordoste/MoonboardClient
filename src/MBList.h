@@ -7,6 +7,8 @@
 
 class MBList {
 public:
+    // tmpBuf, tmpBufLen - working memory, which can be re-used between calls to this class
+    // FS - filesystem where data is stored
     void begin(char *tmpBuf, uint16_t tmpBufLen, FS *FS, Print *stdErr);
     bool open(ListType type, const char *listName, const SortOrder *sortOrder);
     void close();
@@ -14,8 +16,8 @@ public:
     bool readNextProblem(Problem *p);
     uint8_t readNextProblems(Problem pArr[], uint8_t max);
     uint8_t getPageSize() { return CONST_PAGE_SIZE; }
-    bool hasNext() { return listHasNext; }
-    bool hasPrevPage() { return nextProbNum > CONST_PAGE_SIZE; };
+    bool hasNext() { return m_listHasNext; }
+    bool hasPrevPage() { return m_nextProbNum > CONST_PAGE_SIZE; };
     bool fetchNextProblem();
     ListType getType() { return m_listType; }
     const char *getName() { return (const char *)m_listName; }
@@ -24,6 +26,7 @@ public:
     uint8_t readNextPage(Problem pArr[]);
     uint8_t readPrevPage(Problem pArr[]);
     uint8_t readPage(Problem pArr[], uint16_t pageNum);
+    uint16_t size() { return m_listSize; }
 
 protected:
     bool seekPage(uint16_t pageNum);
@@ -32,10 +35,10 @@ protected:
     char m_probBuf[256];
     char *m_tmpBuf;
     uint16_t m_tmpBufLen;
-    File listFile, dataFile;
-    bool listHasNext = false;
-    uint16_t nextProbNum = 0;
-    uint16_t listSize = 0;
+    File m_listFile, m_dataFile;
+    bool m_listHasNext = false;
+    uint16_t m_nextProbNum = 0;
+    uint16_t m_listSize = 0;
     ListType m_listType;
     char m_listName[MAX_LISTNAME_SIZE+1];
     const SortOrder *m_sortOrder;
